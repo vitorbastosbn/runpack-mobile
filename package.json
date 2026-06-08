@@ -3,9 +3,13 @@
   "version": "1.0.0",
   "main": "index.ts",
   "dependencies": {
+    "@expo/vector-icons": "^15.0.2",
+    "@react-native-google-signin/google-signin": "^16.1.2",
     "@tanstack/react-query": "^5.101.0",
     "axios": "^1.17.0",
     "expo": "~56.0.9",
+    "expo-auth-session": "~56.0.13",
+    "expo-crypto": "~56.0.4",
     "expo-linking": "^56.0.13",
     "expo-notifications": "^56.0.16",
     "expo-pedometer": "^1.0.0",
@@ -15,17 +19,20 @@
     "nativewind": "^4.2.5",
     "react": "19.2.3",
     "react-native": "0.85.3",
+    "react-native-reanimated": "4.3.1",
+    "react-native-worklets": "0.8.3",
     "tailwindcss": "^3.4.19",
     "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "babel-preset-expo": "^56.0.14",
     "typescript": "~6.0.3"
   },
   "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "start": "expo start --android",
+    "dev": "expo start",
+    "android": "expo run:android",
     "web": "expo start --web"
   },
   "private": true

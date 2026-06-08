@@ -7,12 +7,9 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "scheme": "runpack",
-    "ios": {
-      "supportsTablet": false,
-      "bundleIdentifier": "com.runpack.app"
-    },
     "android": {
       "package": "com.runpack.app",
+      "minSdkVersion": 26,
       "adaptiveIcon": {
         "backgroundColor": "#000000",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -21,6 +18,7 @@
     },
     "plugins": [
       "expo-router",
+      "@react-native-google-signin/google-signin",
       "expo-secure-store",
       [
         "expo-notifications",

@@ -1,29 +1,27 @@
-import { useEffect } from 'react';
+import '../global.css';
 import { Stack } from 'expo-router';
 import { QueryClientProvider } from '@tanstack/react-query';
-import * as SecureStore from 'expo-secure-store';
-import { useAuthStore } from '@store/auth.store';
 import { queryClient } from '@shared/utils/queryClient';
+import { useSessionRestore } from '@features/auth/hooks/useSessionRestore';
+
+function AppInit() {
+  useSessionRestore();
+  return null;
+}
 
 export default function RootLayout() {
-  const setAuth = useAuthStore((s) => s.setAuth);
-
-  useEffect(() => {
-    // Verificar JWT salvo ao abrir o app
-    SecureStore.getItemAsync('runpack_jwt').then((jwt) => {
-      if (jwt) {
-        // TODO: validar JWT e carregar user — por ora apenas hidrata
-      }
-    });
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
+      <AppInit />
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(onboarding)" />
+        <Stack.Screen name="index" />
+        <Stack.Screen name="(auth)/login" />
+        <Stack.Screen name="(onboarding)/username" />
+        <Stack.Screen name="(onboarding)/avatar" />
+        <Stack.Screen name="(onboarding)/permissions" />
         <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="(modal)" options={{ presentation: 'fullScreenModal' }} />
+        <Stack.Screen name="(modal)/live-session" options={{ presentation: 'fullScreenModal' }} />
+        <Stack.Screen name="(modal)/run-summary" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="invite/[token]" />
         <Stack.Screen name="invite/invalid" />
         <Stack.Screen name="achievements" />

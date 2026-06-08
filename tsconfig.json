@@ -4,12 +4,26 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
-      "@features/*": ["features/*"],
-      "@shared/*": ["shared/*"],
-      "@store/*": ["store/*"],
-      "@constants/*": ["constants/*"]
+      "@features/*": [
+        "features/*"
+      ],
+      "@shared/*": [
+        "shared/*"
+      ],
+      "@store/*": [
+        "store/*"
+      ],
+      "@constants/*": [
+        "constants/*"
+      ]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.d.ts", "expo-env.d.ts"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.d.ts",
+    "expo-env.d.ts",
+    ".expo/types/**/*.ts",
+    "nativewind-env.d.ts"
+  ]
 }
-
