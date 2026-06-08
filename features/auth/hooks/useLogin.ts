@@ -1,8 +1,11 @@
 import { useCallback, useState } from 'react';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import * as SecureStore from 'expo-secure-store';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '@store/auth.store';
 import { authService } from '../services/auth.service';
+
+const ONBOARDING_KEY = 'onboarding_completed';
 
 GoogleSignin.configure({
   webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
@@ -24,8 +27,15 @@ export function useGoogleLogin() {
       const { idToken } = await GoogleSignin.getTokens();
       if (!idToken) throw new Error('Token não recebido do Google');
 
-      const authResponse = await authService.socialLogin('google', idToken);
+      const [authResponse, onboardingFlag, pendingInvite] = await Promise.all([
+        authService.socialLogin('google', idToken),
+        SecureStore.getItemAsync(ONBOARDING_KEY),
+        SecureStore.getItemAsync('pending_invite_token'),
+      ]);
+
       await authService.saveJwt(authResponse.jwt);
+
+      const hasCompletedOnboarding = onboardingFlag === 'true';
 
       setAuth(
         {
@@ -36,10 +46,13 @@ export function useGoogleLogin() {
           avatarUrl: null,
         },
         authResponse.jwt,
+        hasCompletedOnboarding,
       );
 
-      if (authResponse.isNewUser || !authResponse.username) {
-        router.replace('/(onboarding)/username');
+      if (!hasCompletedOnboarding) {
+        router.replace('/(onboarding)/welcome');
+      } else if (pendingInvite) {
+        router.replace(`/invite/${pendingInvite}`);
       } else {
         router.replace('/(tabs)/home');
       }

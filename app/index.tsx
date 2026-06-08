@@ -5,7 +5,7 @@ import { useAuthStore } from '@store/auth.store';
 export default function Index() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isRestoring = useAuthStore((s) => s.isRestoring);
-  const user = useAuthStore((s) => s.user);
+  const onboardingCompleted = useAuthStore((s) => s.onboardingCompleted);
 
   if (isRestoring) {
     return (
@@ -16,6 +16,6 @@ export default function Index() {
   }
 
   if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
-  if (!user?.username) return <Redirect href="/(onboarding)/username" />;
+  if (!onboardingCompleted) return <Redirect href="/(onboarding)/welcome" />;
   return <Redirect href="/(tabs)/home" />;
 }

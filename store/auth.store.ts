@@ -13,9 +13,11 @@ interface AuthState {
   jwt: string | null;
   isAuthenticated: boolean;
   isRestoring: boolean;
-  setAuth: (user: User, jwt: string) => void;
+  onboardingCompleted: boolean;
+  setAuth: (user: User, jwt: string, onboardingCompleted: boolean) => void;
   clearAuth: () => void;
   setRestoring: (value: boolean) => void;
+  setOnboardingCompleted: (value: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -23,7 +25,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   jwt: null,
   isAuthenticated: false,
   isRestoring: true,
-  setAuth: (user, jwt) => set({ user, jwt, isAuthenticated: true, isRestoring: false }),
-  clearAuth: () => set({ user: null, jwt: null, isAuthenticated: false, isRestoring: false }),
+  onboardingCompleted: false,
+  setAuth: (user, jwt, onboardingCompleted) =>
+    set({ user, jwt, isAuthenticated: true, isRestoring: false, onboardingCompleted }),
+  clearAuth: () =>
+    set({ user: null, jwt: null, isAuthenticated: false, isRestoring: false, onboardingCompleted: false }),
   setRestoring: (value) => set({ isRestoring: value }),
+  setOnboardingCompleted: (value) => set({ onboardingCompleted: value }),
 }));

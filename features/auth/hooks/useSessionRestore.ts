@@ -1,6 +1,9 @@
 import { useEffect } from 'react';
+import * as SecureStore from 'expo-secure-store';
 import { useAuthStore } from '@store/auth.store';
 import { authService } from '../services/auth.service';
+
+const ONBOARDING_KEY = 'onboarding_completed';
 
 interface JwtPayload {
   sub: string;
@@ -28,7 +31,11 @@ export function useSessionRestore() {
 
   useEffect(() => {
     async function restore() {
-      const jwt = await authService.getJwt();
+      const [jwt, onboardingFlag] = await Promise.all([
+        authService.getJwt(),
+        SecureStore.getItemAsync(ONBOARDING_KEY),
+      ]);
+
       if (!jwt) {
         clearAuth();
         return;
@@ -50,6 +57,7 @@ export function useSessionRestore() {
           avatarUrl: null,
         },
         jwt,
+        onboardingFlag === 'true',
       );
     }
 

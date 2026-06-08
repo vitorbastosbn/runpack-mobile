@@ -16,8 +16,7 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="(auth)/login" />
-        <Stack.Screen name="(onboarding)/username" />
-        <Stack.Screen name="(onboarding)/avatar" />
+        <Stack.Screen name="(onboarding)/welcome" />
         <Stack.Screen name="(onboarding)/permissions" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(modal)/live-session" options={{ presentation: 'fullScreenModal' }} />
