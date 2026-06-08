@@ -1,24 +1,19 @@
 import { create } from 'zustand';
-
-export type SessionStatus = 'idle' | 'connecting' | 'active' | 'reconnecting' | 'error';
-
-interface RankingEntry {
-  userId: string;
-  username: string;
-  rank: number;
-  distanceM: number;
-  paceSKm: number;
-}
+import type { RankingEntry, WsStatus } from '@features/sessions/types';
 
 interface SessionState {
   sessionId: string | null;
-  status: SessionStatus;
+  joinedAt: number | null; // epoch ms — used for elapsed timer
+  status: WsStatus;
+  isCreator: boolean;
+  groupId: string | null;
+  groupName: string | null;
   ranking: RankingEntry[];
   elapsedMs: number;
   distanceM: number;
   paceSKm: number;
-  setSession: (sessionId: string) => void;
-  setStatus: (status: SessionStatus) => void;
+  setSession: (sessionId: string, joinedAt: number, isCreator: boolean, groupId?: string | null, groupName?: string | null) => void;
+  setStatus: (status: WsStatus) => void;
   updateRanking: (ranking: RankingEntry[]) => void;
   updateTelemetry: (data: { elapsedMs: number; distanceM: number; paceSKm: number }) => void;
   clearSession: () => void;
@@ -26,14 +21,30 @@ interface SessionState {
 
 export const useSessionStore = create<SessionState>((set) => ({
   sessionId: null,
-  status: 'idle',
+  joinedAt: null,
+  status: 'connecting',
+  isCreator: false,
+  groupId: null,
+  groupName: null,
   ranking: [],
   elapsedMs: 0,
   distanceM: 0,
   paceSKm: 0,
-  setSession: (sessionId) => set({ sessionId }),
+  setSession: (sessionId, joinedAt, isCreator, groupId = null, groupName = null) =>
+    set({ sessionId, joinedAt, isCreator, groupId, groupName }),
   setStatus: (status) => set({ status }),
   updateRanking: (ranking) => set({ ranking }),
   updateTelemetry: (data) => set(data),
-  clearSession: () => set({ sessionId: null, status: 'idle', ranking: [], elapsedMs: 0, distanceM: 0, paceSKm: 0 }),
+  clearSession: () => set({
+    sessionId: null,
+    joinedAt: null,
+    status: 'connecting',
+    isCreator: false,
+    groupId: null,
+    groupName: null,
+    ranking: [],
+    elapsedMs: 0,
+    distanceM: 0,
+    paceSKm: 0,
+  }),
 }));

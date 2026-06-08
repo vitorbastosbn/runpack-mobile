@@ -3,9 +3,22 @@ import { Stack } from 'expo-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@shared/utils/queryClient';
 import { useSessionRestore } from '@features/auth/hooks/useSessionRestore';
+import { usePushNotifications } from '@features/notifications/hooks/usePushNotifications';
+import * as Notifications from 'expo-notifications';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 
 function AppInit() {
   useSessionRestore();
+  usePushNotifications();
   return null;
 }
 

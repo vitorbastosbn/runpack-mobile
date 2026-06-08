@@ -38,6 +38,7 @@ export function useRemoveMember(groupId: string) {
   return useMutation({
     mutationFn: (userId: string) => groupsService.removeMember(groupId, userId),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: GROUPS_KEY });
       queryClient.invalidateQueries({ queryKey: membersKey(groupId) });
       queryClient.invalidateQueries({ queryKey: groupKey(groupId) });
     },

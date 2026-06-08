@@ -1,13 +1,13 @@
 import { useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert, Share } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useGroup, useGroupMembers, useDeleteGroup, useRemoveMember, useUpdateMemberRole } from '@features/groups/hooks/useGroups';
 import { useAuthStore } from '@store/auth.store';
 import { Avatar } from '@shared/components/Avatar';
 import { invitesService } from '@features/invites/services/invites.service';
+import { useCreateSession } from '@features/sessions/hooks/useCreateSession';
 import type { GroupMember } from '@features/groups/types';
-import { Share } from 'react-native';
 
 export default function GroupDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -19,6 +19,7 @@ export default function GroupDetailScreen() {
   const deleteGroup = useDeleteGroup();
   const removeMember = useRemoveMember(id);
   const updateRole = useUpdateMemberRole(id);
+  const { createSession, isLoading: startingSession } = useCreateSession();
 
   const isAdmin = group?.myRole === 'admin';
 
@@ -46,7 +47,18 @@ export default function GroupDetailScreen() {
     if (member.userId === currentUserId) {
       Alert.alert('Sair do grupo', 'Tem certeza?', [
         { text: 'Cancelar', style: 'cancel' },
-        { text: 'Sair', style: 'destructive', onPress: () => removeMember.mutate(member.userId) },
+        {
+          text: 'Sair',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await removeMember.mutateAsync(member.userId);
+              router.replace('/(tabs)/groups');
+            } catch {
+              Alert.alert('Não foi possível sair', 'Transfira o papel de admin antes de sair do grupo.');
+            }
+          },
+        },
       ]);
       return;
     }
@@ -98,7 +110,7 @@ export default function GroupDetailScreen() {
   return (
     <View className="flex-1 bg-surface-bg">
       <View className="px-4 pt-14 pb-4 flex-row items-center gap-3">
-        <TouchableOpacity onPress={() => router.back()} hitSlop={8}>
+        <TouchableOpacity onPress={() => router.replace('/(tabs)/groups')} hitSlop={8}>
           <Ionicons name="arrow-back" size={24} color="#FAFAFA" />
         </TouchableOpacity>
         <View className="flex-1">
@@ -120,6 +132,23 @@ export default function GroupDetailScreen() {
       {group?.description ? (
         <Text className="text-text-secondary text-sm px-4 mb-4">{group.description}</Text>
       ) : null}
+
+      {/* Start session button */}
+      <TouchableOpacity
+        className="mx-4 mb-4 bg-brand-primary rounded-xl py-3 flex-row items-center justify-center gap-2"
+        onPress={() => createSession(id)}
+        disabled={startingSession}
+        activeOpacity={0.85}
+      >
+        {startingSession ? (
+          <ActivityIndicator color="#fff" size="small" />
+        ) : (
+          <>
+            <Ionicons name="flash" size={18} color="#fff" />
+            <Text className="text-white font-bold">Iniciar corrida no grupo</Text>
+          </>
+        )}
+      </TouchableOpacity>
 
       <Text className="text-text-secondary text-xs font-semibold uppercase tracking-wider px-4 mb-2">
         Membros
