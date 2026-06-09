@@ -1,11 +1,14 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { Client } from '@stomp/stompjs';
 import { useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
+import { WS_BASE_URL } from '@constants/api';
 import { useAuthStore } from '@store/auth.store';
 import { useSessionStore } from '@store/session.store';
+import { GROUPS_KEY } from '@features/groups/hooks/useGroups';
 import type { RankingEntry } from '../types';
 
-const WS_URL = process.env.EXPO_PUBLIC_WS_URL ?? 'ws://10.0.2.2:8080/ws';
+const WS_URL = WS_BASE_URL;
 const MAX_RETRIES = 5;
 const BACKOFF_DELAYS = [1000, 2000, 4000, 8000, 16000];
 const MAX_OFFLINE_QUEUE = 12;
@@ -20,6 +23,7 @@ interface TelemetryPayload {
 
 export function useLiveSession() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const jwt = useAuthStore((s) => s.jwt);
   const userId = useAuthStore((s) => s.user?.id);
   const sessionId = useSessionStore((s) => s.sessionId);
@@ -146,10 +150,12 @@ export function useLiveSession() {
         addToastRef.current(`${event.username} saiu`);
         break;
       case 'session_finished':
+        // Run ended — drop it from home's "corridas em andamento".
+        queryClient.invalidateQueries({ queryKey: GROUPS_KEY });
         router.replace('/(modal)/run-summary');
         break;
     }
-  }, [router]);
+  }, [router, queryClient]);
 
   const handleEventRef = useRef(handleEvent);
   useEffect(() => { handleEventRef.current = handleEvent; }, [handleEvent]);

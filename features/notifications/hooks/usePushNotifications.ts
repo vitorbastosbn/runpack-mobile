@@ -1,11 +1,21 @@
 import { useEffect, useRef } from 'react';
+import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import Constants from 'expo-constants';
 import { router } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@store/auth.store';
+import { useSessionStore } from '@store/session.store';
+import { sessionsService } from '@features/sessions/services/sessions.service';
+import { GROUPS_KEY } from '@features/groups/hooks/useGroups';
 import { notificationsService } from '../services/notifications.service';
+import { routePushDeepLink } from '../utils/pushDeepLink';
+import { resolveExpoProjectId } from '../utils/pushProject';
 
 export function usePushNotifications() {
   const { isAuthenticated } = useAuthStore();
+  const setSession = useSessionStore((s) => s.setSession);
+  const queryClient = useQueryClient();
   const notificationListener = useRef<Notifications.EventSubscription | null>(null);
   const responseListener = useRef<Notifications.EventSubscription | null>(null);
 
@@ -14,57 +24,86 @@ export function usePushNotifications() {
 
     registerToken();
 
-    notificationListener.current = Notifications.addNotificationReceivedListener(() => {
-      // foreground: displayed by handler set in _layout
+    const getLink = (data?: Record<string, unknown> | null): string | undefined =>
+      (data?.deepLink ?? data?.url) as string | undefined;
+
+    // A group run starting (runpack://groups/{id}) or finishing (runpack://runs/{id})
+    // changes the home "corridas em andamento" list — refresh groups so it stays live.
+    const refreshActiveRunsIfRelevant = (data?: Record<string, unknown> | null) => {
+      const link = getLink(data);
+      if (link && (link.startsWith('runpack://groups/') || link.startsWith('runpack://runs/'))) {
+        queryClient.invalidateQueries({ queryKey: GROUPS_KEY });
+      }
+    };
+
+    const handleResponse = (response: Notifications.NotificationResponse) => {
+      const data = response.notification.request.content.data as Record<string, unknown> | undefined;
+      refreshActiveRunsIfRelevant(data);
+      const url = getLink(data);
+      if (url) {
+        routePushDeepLink(url, {
+          joinSession: sessionsService.joinSession,
+          setSession,
+          push: (href) => router.push(href as Parameters<typeof router.push>[0]),
+        })
+          .then(() => Notifications.clearLastNotificationResponse())
+          .catch((error) => console.warn('[push] deep link failed:', error));
+      }
+    };
+
+    const lastResponse = Notifications.getLastNotificationResponse();
+    if (lastResponse) {
+      handleResponse(lastResponse);
+    }
+
+    notificationListener.current = Notifications.addNotificationReceivedListener((n) => {
+      // Foreground receipt: keep home's active-runs list in sync.
+      refreshActiveRunsIfRelevant(n.request.content.data as Record<string, unknown> | undefined);
     });
 
-    responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
-      // Backend sends { deepLink: "runpack://..." } in data payload
-      const url = (response.notification.request.content.data?.deepLink
-        ?? response.notification.request.content.data?.url) as string | undefined;
-      if (url) handleDeepLink(url);
-    });
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(handleResponse);
 
     return () => {
       notificationListener.current?.remove();
       responseListener.current?.remove();
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, setSession, queryClient]);
 }
 
 async function registerToken() {
-  const { status } = await Notifications.getPermissionsAsync();
-  if (status !== 'granted') return;
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('default', {
+      name: 'RunPack',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#ff7a1a',
+    });
+  }
 
-  const projectId = process.env.EXPO_PUBLIC_EXPO_PROJECT_ID;
-  if (!projectId) return;
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  const finalStatus = existingStatus === 'granted'
+    ? existingStatus
+    : (await Notifications.requestPermissionsAsync()).status;
+  if (finalStatus !== 'granted') {
+    console.warn('[push] permission not granted:', finalStatus);
+    return;
+  }
+
+  const projectId = resolveExpoProjectId(
+    process.env.EXPO_PUBLIC_EXPO_PROJECT_ID,
+    Constants.easConfig?.projectId,
+    Constants.expoConfig?.extra?.eas?.projectId,
+  );
+  if (!projectId) {
+    console.warn('[push] missing Expo projectId. EXPO_PUBLIC_EXPO_PROJECT_ID must be EAS project UUID, not package name.');
+    return;
+  }
 
   try {
     const token = await Notifications.getExpoPushTokenAsync({ projectId });
     await notificationsService.registerPushToken(token.data);
-  } catch {
-    // best-effort
-  }
-}
-
-function handleDeepLink(url: string) {
-  const path = url.replace('runpack://', '');
-  if (path.startsWith('invite/')) {
-    router.push(`/invite/${path.slice(7)}`);
-  } else if (path.startsWith('groups/')) {
-    // Session started notification — navigate to group so user can join
-    const groupId = path.slice(7);
-    router.push(`/(tabs)/groups/${groupId}`);
-  } else if (path.startsWith('sessions/')) {
-    // Active session or run result
-    router.push('/(modal)/live-session');
-  } else if (path.startsWith('runs/')) {
-    router.push(`/(tabs)/history/${path.slice(5)}`);
-  } else if (path === 'friends/requests') {
-    router.push('/(tabs)/friends/requests');
-  } else if (path === 'friends') {
-    router.push('/(tabs)/friends');
-  } else if (path === 'achievements') {
-    router.push('/achievements');
+    console.log('[push] token registered');
+  } catch (error) {
+    console.warn('[push] token registration failed:', error);
   }
 }

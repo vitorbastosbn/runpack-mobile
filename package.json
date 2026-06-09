@@ -10,6 +10,7 @@
     "axios": "^1.17.0",
     "expo": "~56.0.9",
     "expo-auth-session": "~56.0.13",
+    "expo-constants": "~56.0.16",
     "expo-crypto": "~56.0.4",
     "expo-linear-gradient": "~56.0.4",
     "expo-linking": "^56.0.13",
@@ -36,6 +37,7 @@
     "start": "expo start --android",
     "dev": "expo start",
     "android": "expo run:android",
+    "android:device": "node scripts/run-android-device.mjs",
     "web": "expo start --web"
   },
   "private": true
