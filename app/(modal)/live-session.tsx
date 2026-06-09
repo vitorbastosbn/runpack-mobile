@@ -28,6 +28,10 @@ function formatDistance(m: number): string {
   return (m / 1000).toFixed(2) + 'km';
 }
 
+function splitDistance(m: number): { value: string; unit: string } {
+  return { value: (m / 1000).toFixed(2), unit: 'km' };
+}
+
 function GoalProgressBar({ distanceM, goalM }: { distanceM: number; goalM: number }) {
   const pct = Math.min(1, goalM > 0 ? distanceM / goalM : 0);
   return (
@@ -59,6 +63,7 @@ export default function LiveSessionScreen() {
   const distanceGoalM = useSessionStore((s) => s.distanceGoalM);
   const goalCompleted = useSessionStore((s) => s.goalCompleted);
   const userId = useAuthStore((s) => s.user?.id);
+  const distance = splitDistance(distanceM);
 
   // 1s local tick for smooth timer — independent of 5s telemetry interval
   const [liveElapsedMs, setLiveElapsedMs] = useState(0);
@@ -173,16 +178,33 @@ export default function LiveSessionScreen() {
 
       {/* Personal metrics */}
       <View className="flex-row px-4 mb-4 gap-3">
-        <View className="flex-1 bg-surface-card border border-surface-border rounded-xl p-4 items-center">
+        <View className="flex-1 h-28 bg-surface-card border border-surface-border rounded-xl px-3 py-4 items-center justify-center">
           <Text className="text-brand-primary text-3xl font-bold">{formatTime(liveElapsedMs)}</Text>
           <Text className="text-text-secondary text-xs mt-1">Tempo</Text>
         </View>
-        <View className="flex-1 bg-surface-card border border-surface-border rounded-xl p-4 items-center">
-          <Text className="text-text-primary text-3xl font-bold">{formatDistance(distanceM)}</Text>
+        <View className="flex-1 h-28 bg-surface-card border border-surface-border rounded-xl px-3 py-4 items-center justify-center">
+          <View className="flex-row items-end justify-center">
+            <Text
+              className="text-text-primary text-3xl font-bold"
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.75}
+            >
+              {distance.value}
+            </Text>
+            <Text className="text-text-primary text-xs font-bold ml-1 mb-1">{distance.unit}</Text>
+          </View>
           <Text className="text-text-secondary text-xs mt-1">Distância</Text>
         </View>
-        <View className="flex-1 bg-surface-card border border-surface-border rounded-xl p-4 items-center">
-          <Text className="text-text-primary text-2xl font-bold">{formatPace(paceSKm)}</Text>
+        <View className="flex-1 h-28 bg-surface-card border border-surface-border rounded-xl px-3 py-4 items-center justify-center">
+          <Text
+            className="text-text-primary text-2xl font-bold"
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.75}
+          >
+            {formatPace(paceSKm)}
+          </Text>
           <Text className="text-text-secondary text-xs mt-1">Pace</Text>
         </View>
       </View>

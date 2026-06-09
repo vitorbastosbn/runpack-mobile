@@ -14,7 +14,7 @@ import { Avatar } from '@shared/components/Avatar';
 import { MemberAvatarStack } from '@shared/components/MemberAvatarStack';
 import { useAuthStore } from '@store/auth.store';
 import { useSessionStore } from '@store/session.store';
-import { useCreateSession } from '@features/sessions/hooks/useCreateSession';
+import { useCreateSession, useJoinSession } from '@features/sessions/hooks/useCreateSession';
 import { useMyProfile } from '@features/profile/hooks/useMyProfile';
 import { useGroups, useGroupMembers } from '@features/groups/hooks/useGroups';
 import { useRunHistory } from '@features/history/hooks/useRunHistory';
@@ -162,11 +162,56 @@ function RunCard({ run, onPress }: { run: RunSummary; onPress: () => void }) {
   );
 }
 
+function ActiveGroupRunCard({
+  group,
+  onPress,
+  disabled,
+}: {
+  group: Group;
+  onPress: () => void;
+  disabled: boolean;
+}) {
+  return (
+    <TouchableOpacity
+      className="bg-surface-card rounded-2xl mb-3 flex-row overflow-hidden"
+      onPress={onPress}
+      disabled={disabled}
+      activeOpacity={0.8}
+    >
+      <View className="w-1 bg-status-success" />
+      <View className="flex-1 p-4">
+        <View className="flex-row items-center justify-between gap-3">
+          <View className="flex-1">
+            <View className="flex-row items-center gap-2 mb-1">
+              <View style={{ width: 7, height: 7, borderRadius: 999, backgroundColor: '#22C55E' }} />
+              <Text className="text-status-success text-xs font-bold">Ao vivo</Text>
+            </View>
+            <Text className="text-text-primary font-bold text-base" numberOfLines={1}>
+              {group.name}
+            </Text>
+            <Text className="text-text-secondary text-xs mt-0.5">
+              {group.memberCount} {group.memberCount === 1 ? 'membro' : 'membros'}
+            </Text>
+          </View>
+          <View className="items-center justify-center px-1">
+            {disabled ? (
+              <ActivityIndicator color="#F97316" size="small" />
+            ) : (
+              <Ionicons name="enter-outline" size={26} color="#F97316" />
+            )}
+          </View>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
 export default function HomeScreen() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const sessionId = useSessionStore((s) => s.sessionId);
   const { createSession, isLoading: isCreatingSession } = useCreateSession();
+  const { joinSession, isLoading: isJoiningSession } = useJoinSession();
 
   const { data: profile, refetch: refetchProfile, isLoading: profileLoading } = useMyProfile();
   const { data: groupsData, refetch: refetchGroups, isLoading: groupsLoading } = useGroups();
@@ -175,6 +220,7 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const groups = groupsData ?? [];
+  const activeGroupRuns = groups.filter((group) => group.activeSessionId);
   const recentRuns = historyData?.pages[0]?.content.slice(0, 3) ?? [];
   const firstName = (profile?.name ?? user?.name ?? '').split(' ')[0];
 
@@ -285,21 +331,34 @@ export default function HomeScreen() {
           )}
         </View>
 
-        {/* Upcoming scheduled runs */}
+        {/* Active group runs */}
         <View className="mb-6">
           <View className="flex-row items-center gap-2 mb-3">
-            <Ionicons name="calendar-outline" size={16} color="#F97316" />
-            <Text className="text-text-primary font-bold text-base">Próximas corridas</Text>
+            <Ionicons name="radio-outline" size={16} color="#F97316" />
+            <Text className="text-text-primary font-bold text-base">Corridas em andamento</Text>
           </View>
-          <View className="bg-surface-card rounded-2xl p-5 items-center gap-2">
-            <Ionicons name="calendar-outline" size={28} color="#52525B" />
-            <Text className="text-text-secondary text-sm text-center">
-              Nenhuma corrida agendada
-            </Text>
-            <Text className="text-text-disabled text-xs text-center">
-              Agende corridas na tela do grupo
-            </Text>
-          </View>
+          {groupsLoading ? (
+            <ActivityIndicator color="#F97316" />
+          ) : activeGroupRuns.length === 0 ? (
+            <View className="bg-surface-card rounded-2xl p-5 items-center gap-2">
+              <Ionicons name="radio-outline" size={28} color="#52525B" />
+              <Text className="text-text-secondary text-sm text-center">
+                Nenhuma corrida em andamento
+              </Text>
+              <Text className="text-text-disabled text-xs text-center">
+                Entre em um grupo quando alguém iniciar uma corrida
+              </Text>
+            </View>
+          ) : (
+            activeGroupRuns.slice(0, 5).map((group) => (
+              <ActiveGroupRunCard
+                key={group.id}
+                group={group}
+                disabled={isJoiningSession}
+                onPress={() => joinSession(group.activeSessionId!)}
+              />
+            ))
+          )}
         </View>
 
         {/* Recent runs */}

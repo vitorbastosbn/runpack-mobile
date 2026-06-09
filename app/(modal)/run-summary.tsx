@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSessionStore } from '@store/session.store';
 import { useSessionAchievements } from '@features/achievements/hooks/useSessionAchievements';
+import { useRunDetail } from '@features/history/hooks/useRunDetail';
 
 function formatTime(ms: number): string {
   const totalSec = Math.floor(ms / 1000);
@@ -31,6 +32,8 @@ export default function RunSummaryScreen() {
 
   // Poll once after 2s delay so async achievement evaluation has time to complete
   const { data: achievements } = useSessionAchievements(sessionId ?? '', !!sessionId);
+  const { data: runDetail } = useRunDetail(sessionId ?? '');
+  const finalRanking = runDetail?.participants ?? [];
 
   return (
     <ScrollView className="flex-1 bg-surface-bg" contentContainerStyle={{ paddingBottom: 40 }}>
@@ -63,25 +66,40 @@ export default function RunSummaryScreen() {
         </View>
       </View>
 
-      {ranking.length > 0 && (
+      {(finalRanking.length > 0 || ranking.length > 0) && (
         <View className="mx-4 mb-6">
           <Text className="text-text-secondary text-xs font-semibold uppercase tracking-wider mb-3">
             Resultado final
           </Text>
-          {ranking.map((entry) => (
-            <View
-              key={entry.userId}
-              className="flex-row items-center px-4 py-3 mb-2 bg-surface-card border border-surface-border rounded-xl"
-            >
-              <Text className="text-text-secondary w-6 text-sm font-bold">#{entry.rank}</Text>
-              <View className="flex-1 ml-3">
-                <Text className="text-text-primary font-semibold text-sm">{entry.username}</Text>
-              </View>
-              <Text className="text-text-primary font-bold">
-                {(entry.distanceM / 1000).toFixed(2)}km
-              </Text>
-            </View>
-          ))}
+          {finalRanking.length > 0
+            ? finalRanking.map((entry) => (
+                <View
+                  key={entry.userId}
+                  className="flex-row items-center px-4 py-3 mb-2 bg-surface-card border border-surface-border rounded-xl"
+                >
+                  <Text className="text-text-secondary w-6 text-sm font-bold">#{entry.finalRank}</Text>
+                  <View className="flex-1 ml-3">
+                    <Text className="text-text-primary font-semibold text-sm">{entry.username}</Text>
+                  </View>
+                  <Text className="text-text-primary font-bold">
+                    {(entry.totalDistanceM / 1000).toFixed(2)}km
+                  </Text>
+                </View>
+              ))
+            : ranking.map((entry) => (
+                <View
+                  key={entry.userId}
+                  className="flex-row items-center px-4 py-3 mb-2 bg-surface-card border border-surface-border rounded-xl"
+                >
+                  <Text className="text-text-secondary w-6 text-sm font-bold">#{entry.rank}</Text>
+                  <View className="flex-1 ml-3">
+                    <Text className="text-text-primary font-semibold text-sm">{entry.username}</Text>
+                  </View>
+                  <Text className="text-text-primary font-bold">
+                    {(entry.distanceM / 1000).toFixed(2)}km
+                  </Text>
+                </View>
+              ))}
         </View>
       )}
 
