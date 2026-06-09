@@ -27,7 +27,7 @@ const ACHIEVEMENT_ICONS: Record<string, string> = {
 
 export default function RunSummaryScreen() {
   const router = useRouter();
-  const { sessionId, elapsedMs, distanceM, paceSKm, ranking, groupName } = useSessionStore();
+  const { sessionId, elapsedMs, distanceM, paceSKm, ranking, groupName, clearSession } = useSessionStore();
 
   // Poll once after 2s delay so async achievement evaluation has time to complete
   const { data: achievements } = useSessionAchievements(sessionId ?? '', !!sessionId);
@@ -108,7 +108,7 @@ export default function RunSummaryScreen() {
       <View className="mx-4 gap-3">
         <TouchableOpacity
           className="w-full bg-brand-primary rounded-xl py-4 items-center"
-          onPress={() => router.replace('/(tabs)/home')}
+          onPress={() => { clearSession(); router.replace('/(tabs)/home'); }}
           activeOpacity={0.85}
         >
           <Text className="text-white font-bold">Ir para o início</Text>

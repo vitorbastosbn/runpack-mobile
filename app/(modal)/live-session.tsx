@@ -1,18 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Alert, Animated } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSessionStore } from '@store/session.store';
 import { useAuthStore } from '@store/auth.store';
 import { useLiveSession } from '@features/sessions/hooks/useLiveSession';
 import { useTelemetry } from '@features/sessions/hooks/useTelemetry';
-import { useReactions, AVAILABLE_EMOJIS } from '@features/sessions/hooks/useReactions';
 import { useFinishSession, useLeaveSession } from '@features/sessions/hooks/useSessionActions';
 import { Avatar } from '@shared/components/Avatar';
 import type { RankingEntry } from '@features/sessions/types';
 
 function formatTime(ms: number): string {
-  const totalSec = Math.floor(ms / 1000);
+  const totalSec = Math.max(0, Math.floor(ms / 1000));
   const m = Math.floor(totalSec / 60).toString().padStart(2, '0');
   const s = (totalSec % 60).toString().padStart(2, '0');
   return `${m}:${s}`;
@@ -29,22 +28,52 @@ function formatDistance(m: number): string {
   return (m / 1000).toFixed(2) + 'km';
 }
 
+function GoalProgressBar({ distanceM, goalM }: { distanceM: number; goalM: number }) {
+  const pct = Math.min(1, goalM > 0 ? distanceM / goalM : 0);
+  return (
+    <View className="mx-4 mb-4">
+      <View className="flex-row justify-between mb-1">
+        <Text className="text-text-secondary text-xs">Meta: {formatDistance(goalM)}</Text>
+        <Text className="text-text-secondary text-xs">{Math.round(pct * 100)}%</Text>
+      </View>
+      <View className="h-2 bg-surface-card rounded-full overflow-hidden border border-surface-border">
+        <View
+          className="h-full bg-brand-primary rounded-full"
+          style={{ width: `${pct * 100}%` }}
+        />
+      </View>
+    </View>
+  );
+}
+
 export default function LiveSessionScreen() {
   const router = useRouter();
   const sessionId = useSessionStore((s) => s.sessionId);
   const wsStatus = useSessionStore((s) => s.status);
   const ranking = useSessionStore((s) => s.ranking);
-  const elapsedMs = useSessionStore((s) => s.elapsedMs);
+  const joinedAt = useSessionStore((s) => s.joinedAt);
   const distanceM = useSessionStore((s) => s.distanceM);
   const paceSKm = useSessionStore((s) => s.paceSKm);
   const isCreator = useSessionStore((s) => s.isCreator);
   const groupName = useSessionStore((s) => s.groupName);
-  const clearSession = useSessionStore((s) => s.clearSession);
+  const distanceGoalM = useSessionStore((s) => s.distanceGoalM);
+  const goalCompleted = useSessionStore((s) => s.goalCompleted);
   const userId = useAuthStore((s) => s.user?.id);
 
-  const { sendTelemetry, sendReaction, reconnect, reactions, toasts } = useLiveSession();
+  // 1s local tick for smooth timer — independent of 5s telemetry interval
+  const [liveElapsedMs, setLiveElapsedMs] = useState(0);
+  useEffect(() => {
+    if (!joinedAt) return;
+    // Stop ticking once goal completed — freeze time at completion moment
+    if (goalCompleted) return;
+    const tick = setInterval(() => {
+      setLiveElapsedMs(Math.max(0, Date.now() - joinedAt));
+    }, 1000);
+    return () => clearInterval(tick);
+  }, [joinedAt, goalCompleted]);
+
+  const { sendTelemetry, reconnect, toasts } = useLiveSession();
   useTelemetry(sendTelemetry);
-  const { availableEmojis } = useReactions(sendReaction);
 
   const finishSession = useFinishSession();
   const leaveSession = useLeaveSession();
@@ -60,13 +89,18 @@ export default function LiveSessionScreen() {
         text: 'Confirmar',
         style: 'destructive',
         onPress: async () => {
-          if (!sessionId) return;
+          if (!sessionId || !userId) return;
+          const finalElapsedMs = joinedAt ? Math.max(0, Date.now() - joinedAt) : 0;
+          const finalPaceSkm = distanceM > 0
+            ? (finalElapsedMs / 1000) / (distanceM / 1000)
+            : 0;
+          sendTelemetry({ sessionId, userId, elapsedMs: finalElapsedMs, distanceM, paceSKm: finalPaceSkm });
+
           if (isCreator) {
-            await finishSession.mutateAsync(sessionId);
+            await finishSession.mutateAsync({ sessionId, elapsedMs: finalElapsedMs, distanceM, paceSKm: finalPaceSkm });
           } else {
             await leaveSession.mutateAsync(sessionId);
           }
-          clearSession();
           router.replace('/(modal)/run-summary');
         },
       },
@@ -121,6 +155,14 @@ export default function LiveSessionScreen() {
         </View>
       )}
 
+      {/* Goal completed overlay banner */}
+      {goalCompleted && (
+        <View className="bg-brand-primary px-4 py-3 flex-row items-center justify-center gap-2">
+          <Ionicons name="checkmark-circle" size={18} color="#fff" />
+          <Text className="text-white font-bold text-sm">Meta concluída! Aguardando demais...</Text>
+        </View>
+      )}
+
       {/* Header */}
       <View className="px-4 pt-14 pb-4">
         <Text className="text-text-secondary text-xs uppercase tracking-wider">
@@ -130,9 +172,9 @@ export default function LiveSessionScreen() {
       </View>
 
       {/* Personal metrics */}
-      <View className="flex-row px-4 mb-6 gap-3">
+      <View className="flex-row px-4 mb-4 gap-3">
         <View className="flex-1 bg-surface-card border border-surface-border rounded-xl p-4 items-center">
-          <Text className="text-brand-primary text-3xl font-bold">{formatTime(elapsedMs)}</Text>
+          <Text className="text-brand-primary text-3xl font-bold">{formatTime(liveElapsedMs)}</Text>
           <Text className="text-text-secondary text-xs mt-1">Tempo</Text>
         </View>
         <View className="flex-1 bg-surface-card border border-surface-border rounded-xl p-4 items-center">
@@ -145,6 +187,11 @@ export default function LiveSessionScreen() {
         </View>
       </View>
 
+      {/* Distance goal progress bar */}
+      {distanceGoalM != null && distanceGoalM > 0 && (
+        <GoalProgressBar distanceM={distanceM} goalM={distanceGoalM} />
+      )}
+
       {/* Ranking */}
       <Text className="text-text-secondary text-xs font-semibold uppercase tracking-wider px-4 mb-2">
         Ranking ao vivo
@@ -153,7 +200,7 @@ export default function LiveSessionScreen() {
         data={ranking}
         keyExtractor={(item) => item.userId}
         renderItem={renderRankEntry}
-        contentContainerStyle={{ paddingHorizontal: 16 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
         ListEmptyComponent={
           <Text className="text-text-secondary text-sm text-center mt-4">
             Aguardando dados de corrida...
@@ -172,29 +219,8 @@ export default function LiveSessionScreen() {
         </View>
       )}
 
-      {/* Floating reactions */}
-      {reactions.map((r) => (
-        <View key={r.id} className="absolute bottom-32 left-0 right-0 items-center">
-          <Text style={{ fontSize: 40 }}>{r.emoji}</Text>
-        </View>
-      ))}
-
       {/* Bottom actions */}
       <View className="px-4 pb-8 pt-4 border-t border-surface-border">
-        {/* Reaction buttons */}
-        <View className="flex-row justify-center gap-4 mb-4">
-          {AVAILABLE_EMOJIS.map((emoji) => (
-            <TouchableOpacity
-              key={emoji}
-              onPress={() => sendReaction(emoji)}
-              className="w-12 h-12 bg-surface-card border border-surface-border rounded-full items-center justify-center"
-            >
-              <Text style={{ fontSize: 22 }}>{emoji}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* End/Leave button */}
         <TouchableOpacity
           className="w-full bg-status-error rounded-xl py-4 items-center"
           onPress={handleEnd}

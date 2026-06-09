@@ -8,6 +8,7 @@ export interface SessionItem {
   finishedAt: string | null;
   participantCount: number;
   isParticipant: boolean;
+  distanceGoalM: number | null;
 }
 
 export interface SessionParticipant {

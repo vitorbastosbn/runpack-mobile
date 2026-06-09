@@ -8,6 +8,7 @@ export interface Group {
   memberCount: number;
   myRole: GroupRole;
   createdAt: string;
+  activeSessionId: string | null;
 }
 
 export interface GroupMember {

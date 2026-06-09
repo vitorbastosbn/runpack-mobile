@@ -6,7 +6,7 @@ import { useGroup, useGroupMembers, useDeleteGroup, useRemoveMember, useUpdateMe
 import { useAuthStore } from '@store/auth.store';
 import { Avatar } from '@shared/components/Avatar';
 import { invitesService } from '@features/invites/services/invites.service';
-import { useCreateSession } from '@features/sessions/hooks/useCreateSession';
+import { useCreateSession, useJoinSession } from '@features/sessions/hooks/useCreateSession';
 import type { GroupMember } from '@features/groups/types';
 
 export default function GroupDetailScreen() {
@@ -20,6 +20,21 @@ export default function GroupDetailScreen() {
   const removeMember = useRemoveMember(id);
   const updateRole = useUpdateMemberRole(id);
   const { createSession, isLoading: startingSession } = useCreateSession();
+
+  const handleStartSession = () => {
+    Alert.alert(
+      'Meta de distância',
+      'Defina uma meta para a corrida (todos devem completar para encerrar automaticamente).',
+      [
+        { text: 'Sem meta', onPress: () => createSession({ groupId: id }) },
+        { text: '1 km',    onPress: () => createSession({ groupId: id, distanceGoalM: 1000 }) },
+        { text: '3 km',    onPress: () => createSession({ groupId: id, distanceGoalM: 3000 }) },
+        { text: '5 km',    onPress: () => createSession({ groupId: id, distanceGoalM: 5000 }) },
+        { text: '10 km',   onPress: () => createSession({ groupId: id, distanceGoalM: 10000 }) },
+      ],
+    );
+  };
+  const { joinSession, isLoading: joiningSession } = useJoinSession();
 
   const isAdmin = group?.myRole === 'admin';
 
@@ -133,22 +148,40 @@ export default function GroupDetailScreen() {
         <Text className="text-text-secondary text-sm px-4 mb-4">{group.description}</Text>
       ) : null}
 
-      {/* Start session button */}
-      <TouchableOpacity
-        className="mx-4 mb-4 bg-brand-primary rounded-xl py-3 flex-row items-center justify-center gap-2"
-        onPress={() => createSession(id)}
-        disabled={startingSession}
-        activeOpacity={0.85}
-      >
-        {startingSession ? (
-          <ActivityIndicator color="#fff" size="small" />
-        ) : (
-          <>
-            <Ionicons name="flash" size={18} color="#fff" />
-            <Text className="text-white font-bold">Iniciar corrida no grupo</Text>
-          </>
-        )}
-      </TouchableOpacity>
+      {/* Session button — join active or start new */}
+      {group?.activeSessionId ? (
+        <TouchableOpacity
+          className="mx-4 mb-4 bg-brand-primary rounded-xl py-3 flex-row items-center justify-center gap-2"
+          onPress={() => joinSession(group.activeSessionId!)}
+          disabled={joiningSession}
+          activeOpacity={0.85}
+        >
+          {joiningSession ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <>
+              <Ionicons name="enter-outline" size={18} color="#fff" />
+              <Text className="text-white font-bold">Entrar na corrida</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      ) : isAdmin ? (
+        <TouchableOpacity
+          className="mx-4 mb-4 bg-brand-primary rounded-xl py-3 flex-row items-center justify-center gap-2"
+          onPress={handleStartSession}
+          disabled={startingSession}
+          activeOpacity={0.85}
+        >
+          {startingSession ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <>
+              <Ionicons name="flash" size={18} color="#fff" />
+              <Text className="text-white font-bold">Iniciar corrida no grupo</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      ) : null}
 
       <Text className="text-text-secondary text-xs font-semibold uppercase tracking-wider px-4 mb-2">
         Membros

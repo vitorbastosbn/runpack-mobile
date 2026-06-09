@@ -27,7 +27,12 @@
           "color": "#000000"
         }
       ],
-      "expo-pedometer"
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "O RunPack usa sua localização para medir a distância percorrida durante corridas."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

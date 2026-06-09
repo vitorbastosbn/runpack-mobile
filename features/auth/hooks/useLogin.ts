@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import axios from 'axios';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import * as SecureStore from 'expo-secure-store';
 import { useRouter } from 'expo-router';
@@ -61,6 +62,10 @@ export function useGoogleLogin() {
         const code = (err as { code: string }).code;
         if (code === statusCodes.SIGN_IN_CANCELLED) return;
         if (code === statusCodes.IN_PROGRESS) return;
+      }
+      if (axios.isAxiosError<{ message?: string }>(err)) {
+        setError(err.response?.data?.message ?? err.message);
+        return;
       }
       setError(err instanceof Error ? err.message : 'Erro ao realizar login. Tente novamente.');
     } finally {

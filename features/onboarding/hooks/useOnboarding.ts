@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import * as Notifications from 'expo-notifications';
-import * as Pedometer from 'expo-pedometer';
+import * as Location from 'expo-location';
 import * as SecureStore from 'expo-secure-store';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '@store/auth.store';
@@ -17,7 +17,7 @@ export function useOnboarding() {
     try {
       await Promise.allSettled([
         Notifications.requestPermissionsAsync(),
-        Pedometer.requestPermissionsAsync(),
+        Location.requestForegroundPermissionsAsync(),
       ]);
       await SecureStore.setItemAsync(ONBOARDING_KEY, 'true');
       setOnboardingCompleted(true);

@@ -9,9 +9,9 @@ const PERMISSIONS = [
     description: 'Para avisar quando seus amigos iniciarem uma corrida ou aceitarem seu convite.',
   },
   {
-    icon: 'footsteps',
-    title: 'Movimento',
-    description: 'Para medir sua distância percorrida sem gastar bateria com GPS.',
+    icon: 'location',
+    title: 'Localização',
+    description: 'Para medir sua distância percorrida durante a corrida.',
   },
 ] as const;
 

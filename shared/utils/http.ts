@@ -19,6 +19,18 @@ http.interceptors.request.use(async (config) => {
 http.interceptors.response.use(
   (response) => response,
   async (error) => {
+    if (axios.isAxiosError(error) && error.response) {
+      const method = error.config?.method?.toUpperCase() ?? 'HTTP';
+      const url = `${error.config?.baseURL ?? ''}${error.config?.url ?? ''}`;
+      const body = error.response.data;
+      const message =
+        body && typeof body === 'object' && 'message' in body
+          ? String(body.message)
+          : error.message;
+
+      console.warn('[api]', method, url, error.response.status, message);
+    }
+
     if (error.response?.status === 401) {
       await SecureStore.deleteItemAsync('runpack_jwt');
       // Zustand clearAuth será chamado pelo listener de 401 na camada de feature

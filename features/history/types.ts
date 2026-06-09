@@ -28,7 +28,7 @@ export interface RunDetail {
   groupName: string | null;
   startedAt: string;
   finishedAt: string;
-  myResult: RunParticipantResult;
+  myResult: RunParticipantResult | null;
   participants: RunParticipantResult[];
 }
 
