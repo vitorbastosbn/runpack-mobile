@@ -1,21 +1,38 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { friendsService } from '../services/friends.service';
+import type { Page } from '@shared/types/pagination';
+import type { Friendship } from '../types';
 
 export const FRIENDS_KEY = ['friends'];
 export const REQUESTS_KEY = ['friends', 'requests'];
 export const SENT_KEY = ['friends', 'sent'];
 
+// Friends list: infinite scroll.
 export function useFriends() {
-  return useQuery({
+  return useInfiniteQuery<Page<Friendship>, Error>({
     queryKey: FRIENDS_KEY,
-    queryFn: friendsService.getFriends,
+    queryFn: ({ pageParam = 0 }) => friendsService.getFriends(pageParam as number),
+    getNextPageParam: (last) => (last.last ? undefined : last.number + 1),
+    initialPageParam: 0,
   });
 }
 
+// Received requests: infinite scroll (used by the requests screen).
 export function useFriendRequests() {
-  return useQuery({
+  return useInfiniteQuery<Page<Friendship>, Error>({
     queryKey: REQUESTS_KEY,
-    queryFn: friendsService.getPendingRequests,
+    queryFn: ({ pageParam = 0 }) => friendsService.getPendingRequests(pageParam as number),
+    getNextPageParam: (last) => (last.last ? undefined : last.number + 1),
+    initialPageParam: 0,
+  });
+}
+
+// Lightweight count for the notifications badge — first page only, uses totalElements.
+export function useFriendRequestsCount() {
+  return useQuery({
+    queryKey: [...REQUESTS_KEY, 'count'],
+    queryFn: () => friendsService.getPendingRequests(0, 1),
+    select: (page) => page.totalElements,
   });
 }
 

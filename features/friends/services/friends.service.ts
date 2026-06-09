@@ -1,14 +1,15 @@
 import { http } from '@shared/utils/http';
+import type { Page } from '@shared/types/pagination';
 import type { Friendship, UserSearchResult } from '../types';
 
 export const friendsService = {
-  async getFriends(): Promise<Friendship[]> {
-    const { data } = await http.get<Friendship[]>('/friendships');
+  async getFriends(page = 0, size = 10): Promise<Page<Friendship>> {
+    const { data } = await http.get<Page<Friendship>>('/friendships', { params: { page, size } });
     return data;
   },
 
-  async getPendingRequests(): Promise<Friendship[]> {
-    const { data } = await http.get<Friendship[]>('/friendships/requests');
+  async getPendingRequests(page = 0, size = 10): Promise<Page<Friendship>> {
+    const { data } = await http.get<Page<Friendship>>('/friendships/requests', { params: { page, size } });
     return data;
   },
 

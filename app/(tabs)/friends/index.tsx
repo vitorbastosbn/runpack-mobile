@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useFriends, useFriendRequests, useFriendActions } from '@features/friends/hooks/useFriends';
+import { useFriends, useFriendRequestsCount, useFriendActions } from '@features/friends/hooks/useFriends';
 import { useUserSearch } from '@features/friends/hooks/useUserSearch';
 import { useDebounce } from '@shared/hooks/useDebounce';
 import { Avatar } from '@shared/components/Avatar';
@@ -17,8 +17,12 @@ export default function FriendsScreen() {
   const debouncedQuery = useDebounce(query, 400);
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
 
-  const { data: friends = [], isLoading: loadingFriends, refetch } = useFriends();
-  const { data: receivedRequests = [] } = useFriendRequests();
+  const {
+    data: friendsData, isLoading: loadingFriends, refetch,
+    fetchNextPage, hasNextPage, isFetchingNextPage,
+  } = useFriends();
+  const friends = friendsData?.pages.flatMap((p) => p.content) ?? [];
+  const { data: requestCount = 0 } = useFriendRequestsCount();
   const { data: searchResults = [], isFetching: searching } = useUserSearch(debouncedQuery);
   const { sendRequest, removeFriend } = useFriendActions();
 
@@ -85,10 +89,10 @@ export default function FriendsScreen() {
           <Text className="text-text-primary text-2xl font-bold">Amigos</Text>
           <TouchableOpacity onPress={() => router.push('/(tabs)/friends/requests')} className="relative">
             <Ionicons name="notifications-outline" size={24} color="#FAFAFA" />
-            {receivedRequests.length > 0 && (
+            {requestCount > 0 && (
               <View className="absolute -top-1 -right-1 w-4 h-4 bg-brand-primary rounded-full items-center justify-center">
                 <Text className="text-white font-bold" style={{ fontSize: 9 }}>
-                  {receivedRequests.length > 9 ? '9+' : receivedRequests.length}
+                  {requestCount > 9 ? '9+' : requestCount}
                 </Text>
               </View>
             )}
@@ -133,8 +137,13 @@ export default function FriendsScreen() {
           data={friends}
           keyExtractor={(item) => item.id}
           renderItem={renderFriend}
-          contentContainerStyle={{ paddingHorizontal: 16 }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
           refreshControl={<RefreshControl refreshing={loadingFriends} onRefresh={refetch} tintColor="#F97316" />}
+          onEndReached={() => { if (hasNextPage) fetchNextPage(); }}
+          onEndReachedThreshold={0.3}
+          ListFooterComponent={
+            isFetchingNextPage ? <ActivityIndicator color="#F97316" style={{ marginVertical: 16 }} /> : null
+          }
           ListEmptyComponent={
             loadingFriends ? (
               <ActivityIndicator color="#F97316" style={{ marginTop: 32 }} />

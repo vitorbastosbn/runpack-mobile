@@ -1,53 +1,127 @@
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, TextInput, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useGroups } from '@features/groups/hooks/useGroups';
+import { useGroupsInfinite, useGroupMembers } from '@features/groups/hooks/useGroups';
+import { MemberAvatarStack } from '@shared/components/MemberAvatarStack';
+import { useDebounce } from '@shared/hooks/useDebounce';
 import type { Group } from '@features/groups/types';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
+
+const SURFACE_CARD = '#18181B';
+const MAX_VISIBLE_AVATARS = 6;
+
+function GroupListCard({ group, onPress }: { group: Group; onPress: () => void }) {
+  const { data: allMembers } = useGroupMembers(group.id);
+  const members = (allMembers ?? []).slice(0, MAX_VISIBLE_AVATARS);
+
+  return (
+    <TouchableOpacity
+      className="bg-surface-card border border-surface-border rounded-2xl p-4 mb-3"
+      onPress={onPress}
+      activeOpacity={0.85}
+      accessibilityRole="button"
+      accessibilityLabel={`Grupo ${group.name}, ${group.memberCount} membros`}
+    >
+      {/* Title + role */}
+      <View className="flex-row items-center gap-2">
+        <Text className="text-text-primary font-bold text-base flex-1" numberOfLines={1}>
+          {group.name}
+        </Text>
+        {group.myRole === 'admin' && (
+          <View className="rounded-md bg-brand-primary/20 px-1.5 py-px">
+            <Text
+              className="text-brand-primary font-bold"
+              style={{ fontSize: 10, letterSpacing: 0.5 }}
+            >
+              ADMIN
+            </Text>
+          </View>
+        )}
+      </View>
+
+      {group.description ? (
+        <Text className="text-text-secondary text-sm mt-1" numberOfLines={1}>
+          {group.description}
+        </Text>
+      ) : null}
+
+      {/* Footer: avatars + status */}
+      <View className="flex-row items-center justify-between mt-4 pt-4 border-t border-surface-border">
+        {members.length > 0 ? (
+          <MemberAvatarStack
+            members={members}
+            totalCount={group.memberCount}
+            borderColor={SURFACE_CARD}
+            size={26}
+          />
+        ) : (
+          <View style={{ height: 26 }} />
+        )}
+
+        {group.activeSessionId ? (
+          <View className="flex-row items-center gap-1.5 bg-brand-primary/15 border border-brand-primary/40 rounded-full px-2.5 py-1">
+            <View className="w-1.5 h-1.5 rounded-full bg-brand-primary" />
+            <Text className="text-brand-primary text-xs font-semibold">Em corrida</Text>
+          </View>
+        ) : (
+          <Text className="text-text-secondary text-xs">
+            {group.memberCount} {group.memberCount === 1 ? 'membro' : 'membros'}
+          </Text>
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+}
 
 export default function GroupsScreen() {
   const router = useRouter();
-  const { data: groups = [], isLoading, refetch } = useGroups();
+  const [query, setQuery] = useState('');
+  const debouncedQuery = useDebounce(query, 400);
+  const {
+    data, isLoading, refetch,
+    fetchNextPage, hasNextPage, isFetchingNextPage,
+  } = useGroupsInfinite(debouncedQuery.trim());
+
+  const groups = data?.pages.flatMap((p) => p.content) ?? [];
 
   const renderGroup = useCallback(({ item }: { item: Group }) => (
-    <TouchableOpacity
-      className="flex-row items-center bg-surface-card border border-surface-border rounded-xl px-4 py-3 mb-2"
-      onPress={() => router.push(`/(tabs)/groups/${item.id}`)}
-      activeOpacity={0.8}
-    >
-      <View className="w-11 h-11 rounded-xl bg-surface-elevated items-center justify-center mr-3">
-        <Text className="text-brand-primary text-lg font-bold">
-          {item.name.charAt(0).toUpperCase()}
-        </Text>
-      </View>
-      <View className="flex-1">
-        <Text className="text-text-primary font-semibold">{item.name}</Text>
-        <Text className="text-text-secondary text-xs">
-          {item.memberCount} {item.memberCount === 1 ? 'membro' : 'membros'} · {item.myRole === 'admin' ? 'Admin' : 'Membro'}
-        </Text>
-      </View>
-      <Ionicons name="chevron-forward" size={18} color="#52525B" />
-    </TouchableOpacity>
+    <GroupListCard group={item} onPress={() => router.push(`/(tabs)/groups/${item.id}`)} />
   ), [router]);
 
   return (
     <View className="flex-1 bg-surface-bg">
-      <View className="px-4 pt-14 pb-4 flex-row items-center justify-between">
-        <Text className="text-text-primary text-2xl font-bold">Grupos</Text>
-        <TouchableOpacity
-          onPress={() => router.push('/(tabs)/groups/create')}
-          className="w-9 h-9 bg-brand-primary rounded-xl items-center justify-center"
-        >
-          <Ionicons name="add" size={22} color="#fff" />
-        </TouchableOpacity>
+      <View className="px-4 pt-14 pb-4">
+        <Text className="text-text-primary text-2xl font-bold mb-4">Grupos</Text>
+
+        <View className="flex-row items-center bg-surface-card border border-surface-border rounded-xl px-3 py-2">
+          <Ionicons name="search" size={18} color="#A1A1AA" />
+          <TextInput
+            className="flex-1 text-text-primary ml-2 text-sm"
+            placeholder="Buscar grupo pelo nome..."
+            placeholderTextColor="#A1A1AA"
+            value={query}
+            onChangeText={setQuery}
+            autoCorrect={false}
+          />
+          {query.length > 0 && (
+            <TouchableOpacity onPress={() => setQuery('')} hitSlop={8}>
+              <Ionicons name="close-circle" size={18} color="#A1A1AA" />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <FlatList
         data={groups}
         keyExtractor={(item) => item.id}
         renderItem={renderGroup}
-        contentContainerStyle={{ paddingHorizontal: 16 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
         refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor="#F97316" />}
+        onEndReached={() => { if (hasNextPage) fetchNextPage(); }}
+        onEndReachedThreshold={0.3}
+        ListFooterComponent={
+          isFetchingNextPage ? <ActivityIndicator color="#F97316" style={{ marginVertical: 16 }} /> : null
+        }
         ListEmptyComponent={
           isLoading ? (
             <ActivityIndicator color="#F97316" style={{ marginTop: 32 }} />
@@ -55,12 +129,24 @@ export default function GroupsScreen() {
             <View className="items-center mt-16">
               <Ionicons name="people-circle-outline" size={48} color="#3F3F46" />
               <Text className="text-text-secondary mt-4 text-center">
-                Nenhum grupo ainda.{'\n'}Crie um ou aguarde um convite.
+                {debouncedQuery.trim()
+                  ? 'Nenhum grupo encontrado.'
+                  : 'Nenhum grupo ainda.\nCrie um ou aguarde um convite.'}
               </Text>
             </View>
           )
         }
       />
+
+      {/* FAB — create group */}
+      <TouchableOpacity
+        style={{ position: 'absolute', bottom: 28, right: 20 }}
+        className="w-16 h-16 bg-brand-primary rounded-full items-center justify-center"
+        onPress={() => router.push('/(tabs)/groups/create')}
+        activeOpacity={0.85}
+      >
+        <Ionicons name="add" size={30} color="#fff" />
+      </TouchableOpacity>
     </View>
   );
 }

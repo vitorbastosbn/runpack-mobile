@@ -1,12 +1,15 @@
 import { http } from '@shared/utils/http';
-import type { Group, GroupMember } from '../types';
+import type { Page } from '@shared/types/pagination';
+import type { Group, GroupMember, GroupLastRun, GroupRunSummary } from '../types';
 
 interface CreateGroupPayload { name: string; description?: string; imageUrl?: string }
 interface UpdateGroupPayload { name?: string; description?: string; imageUrl?: string }
 
 export const groupsService = {
-  async getGroups(): Promise<Group[]> {
-    const { data } = await http.get<Group[]>('/groups');
+  async getGroups(page = 0, size = 10, q?: string): Promise<Page<Group>> {
+    const params: Record<string, string | number> = { page, size };
+    if (q && q.trim()) params.q = q.trim();
+    const { data } = await http.get<Page<Group>>('/groups', { params });
     return data;
   },
 
@@ -31,6 +34,17 @@ export const groupsService = {
 
   async getMembers(id: string): Promise<GroupMember[]> {
     const { data } = await http.get<GroupMember[]>(`/groups/${id}/members`);
+    return data;
+  },
+
+  // Top 3 of the group's last finished run. Backend returns 204 (no content) when none.
+  async getLastRun(id: string): Promise<GroupLastRun | null> {
+    const res = await http.get<GroupLastRun>(`/groups/${id}/last-run`);
+    return res.status === 204 ? null : res.data;
+  },
+
+  async getRuns(id: string): Promise<GroupRunSummary[]> {
+    const { data } = await http.get<GroupRunSummary[]>(`/groups/${id}/runs`);
     return data;
   },
 

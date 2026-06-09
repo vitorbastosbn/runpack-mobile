@@ -2,7 +2,6 @@ import { useState } from 'react';
 import {
   View,
   Text,
-  Image,
   ScrollView,
   TouchableOpacity,
   RefreshControl,
@@ -12,6 +11,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Avatar } from '@shared/components/Avatar';
+import { MemberAvatarStack } from '@shared/components/MemberAvatarStack';
 import { useAuthStore } from '@store/auth.store';
 import { useSessionStore } from '@store/session.store';
 import { useCreateSession } from '@features/sessions/hooks/useCreateSession';
@@ -31,78 +31,6 @@ const CARD_GRADIENTS: [string, string][] = [
 ];
 
 const MAX_VISIBLE_AVATARS = 5;
-
-function MemberAvatarStack({
-  members,
-  totalCount,
-  borderColor,
-}: {
-  members: GroupMember[];
-  totalCount: number;
-  borderColor: string;
-}) {
-  const overflow = totalCount - members.length;
-
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-      {members.map((member, i) => (
-        <View
-          key={member.userId}
-          style={{
-            width: 24,
-            height: 24,
-            borderRadius: 12,
-            borderWidth: 1.5,
-            borderColor,
-            marginLeft: i > 0 ? -8 : 0,
-            zIndex: members.length - i,
-            overflow: 'hidden',
-            backgroundColor: 'rgba(255,255,255,0.2)',
-          }}
-        >
-          {member.avatarUrl ? (
-            <Image
-              source={{ uri: member.avatarUrl }}
-              style={{ width: 24, height: 24, borderRadius: 12 }}
-            />
-          ) : (
-            <View
-              style={{
-                width: 24,
-                height: 24,
-                borderRadius: 12,
-                backgroundColor: 'rgba(255,255,255,0.3)',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>
-                {member.name.charAt(0).toUpperCase()}
-              </Text>
-            </View>
-          )}
-        </View>
-      ))}
-      {overflow > 0 && (
-        <View
-          style={{
-            width: 24,
-            height: 24,
-            borderRadius: 12,
-            backgroundColor: 'rgba(0,0,0,0.3)',
-            borderWidth: 1.5,
-            borderColor,
-            marginLeft: -8,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Text style={{ color: '#fff', fontSize: 8, fontWeight: '700' }}>+{overflow}</Text>
-        </View>
-      )}
-    </View>
-  );
-}
 
 function GroupCard({
   group,

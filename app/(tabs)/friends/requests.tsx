@@ -12,7 +12,12 @@ export default function FriendRequestsScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>('received');
 
-  const { data: received = [], isLoading: loadingReceived } = useFriendRequests();
+  const {
+    data: receivedData, isLoading: loadingReceived,
+    fetchNextPage, hasNextPage, isFetchingNextPage,
+  } = useFriendRequests();
+  const received = receivedData?.pages.flatMap((p) => p.content) ?? [];
+  const receivedCount = receivedData?.pages[0]?.totalElements ?? 0;
   const { data: sent = [], isLoading: loadingSent } = useSentRequests();
   const { acceptRequest, rejectRequest } = useFriendActions();
 
@@ -59,9 +64,10 @@ export default function FriendRequestsScreen() {
     </View>
   ), []);
 
-  const isLoading = activeTab === 'received' ? loadingReceived : loadingSent;
-  const data = activeTab === 'received' ? received : sent;
-  const renderItem = activeTab === 'received' ? renderReceived : renderSent;
+  const isReceived = activeTab === 'received';
+  const isLoading = isReceived ? loadingReceived : loadingSent;
+  const data = isReceived ? received : sent;
+  const renderItem = isReceived ? renderReceived : renderSent;
   const emptyLabel = activeTab === 'received'
     ? 'Nenhuma solicitação recebida'
     : 'Nenhuma solicitação enviada';
@@ -85,7 +91,7 @@ export default function FriendRequestsScreen() {
             className={`flex-1 py-2 rounded-lg items-center ${activeTab === tab ? 'bg-brand-primary' : ''}`}
           >
             <Text className={`text-sm font-semibold ${activeTab === tab ? 'text-white' : 'text-text-secondary'}`}>
-              {tab === 'received' ? `Recebidas${received.length > 0 ? ` (${received.length})` : ''}` : 'Enviadas'}
+              {tab === 'received' ? `Recebidas${receivedCount > 0 ? ` (${receivedCount})` : ''}` : 'Enviadas'}
             </Text>
           </TouchableOpacity>
         ))}
@@ -95,7 +101,14 @@ export default function FriendRequestsScreen() {
         data={data}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
-        contentContainerStyle={{ paddingHorizontal: 16 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
+        onEndReached={() => { if (isReceived && hasNextPage) fetchNextPage(); }}
+        onEndReachedThreshold={0.3}
+        ListFooterComponent={
+          isReceived && isFetchingNextPage ? (
+            <ActivityIndicator color="#F97316" style={{ marginVertical: 16 }} />
+          ) : null
+        }
         ListEmptyComponent={
           isLoading ? (
             <ActivityIndicator color="#F97316" style={{ marginTop: 32 }} />
