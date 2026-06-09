@@ -1,7 +1,12 @@
 import { http } from '@shared/utils/http';
-import type { SessionItem, SessionDetail } from '../types';
+import type { SessionItem, SessionDetail, ActiveRun } from '../types';
 
 export const sessionsService = {
+  async getActiveGroupRuns(): Promise<ActiveRun[]> {
+    const { data } = await http.get<ActiveRun[]>('/sessions/active');
+    return data;
+  },
+
   async createSession(groupId?: string, distanceGoalM?: number | null): Promise<SessionItem> {
     const { data } = await http.post('/sessions', {
       groupId: groupId ?? null,

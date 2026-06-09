@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,7 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Avatar } from '@shared/components/Avatar';
@@ -15,11 +15,13 @@ import { MemberAvatarStack } from '@shared/components/MemberAvatarStack';
 import { useAuthStore } from '@store/auth.store';
 import { useSessionStore } from '@store/session.store';
 import { useCreateSession, useJoinSession } from '@features/sessions/hooks/useCreateSession';
+import { useActiveGroupRuns } from '@features/sessions/hooks/useActiveRuns';
 import { useMyProfile } from '@features/profile/hooks/useMyProfile';
 import { useGroups, useGroupMembers } from '@features/groups/hooks/useGroups';
 import { useRunHistory } from '@features/history/hooks/useRunHistory';
 import { formatDistance, formatDuration, formatPace, formatRank } from '@shared/utils/format';
 import type { Group, GroupMember } from '@features/groups/types';
+import type { ActiveRun } from '@features/sessions/types';
 import type { RunSummary } from '@features/history/types';
 
 const CARD_GRADIENTS: [string, string][] = [
@@ -163,11 +165,11 @@ function RunCard({ run, onPress }: { run: RunSummary; onPress: () => void }) {
 }
 
 function ActiveGroupRunCard({
-  group,
+  run,
   onPress,
   disabled,
 }: {
-  group: Group;
+  run: ActiveRun;
   onPress: () => void;
   disabled: boolean;
 }) {
@@ -187,10 +189,10 @@ function ActiveGroupRunCard({
               <Text className="text-status-success text-xs font-bold">Ao vivo</Text>
             </View>
             <Text className="text-text-primary font-bold text-base" numberOfLines={1}>
-              {group.name}
+              {run.groupName}
             </Text>
             <Text className="text-text-secondary text-xs mt-0.5">
-              {group.memberCount} {group.memberCount === 1 ? 'membro' : 'membros'}
+              {run.participantCount} correndo
             </Text>
           </View>
           <View className="items-center justify-center px-1">
@@ -215,18 +217,27 @@ export default function HomeScreen() {
 
   const { data: profile, refetch: refetchProfile, isLoading: profileLoading } = useMyProfile();
   const { data: groupsData, refetch: refetchGroups, isLoading: groupsLoading } = useGroups();
+  const { data: activeRuns = [], refetch: refetchActiveRuns, isLoading: activeRunsLoading } = useActiveGroupRuns();
   const { data: historyData, refetch: refetchHistory, isLoading: historyLoading } = useRunHistory();
 
   const [refreshing, setRefreshing] = useState(false);
 
+  // Refresh active runs each time home regains focus (covers members who
+  // didn't receive a start/finish push).
+  useFocusEffect(
+    useCallback(() => {
+      refetchActiveRuns();
+    }, [refetchActiveRuns]),
+  );
+
   const groups = groupsData ?? [];
-  const activeGroupRuns = groups.filter((group) => group.activeSessionId);
+  const visibleActiveRuns = activeRuns.slice(0, 3);
   const recentRuns = historyData?.pages[0]?.content.slice(0, 3) ?? [];
   const firstName = (profile?.name ?? user?.name ?? '').split(' ')[0];
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([refetchProfile(), refetchGroups(), refetchHistory()]);
+    await Promise.all([refetchProfile(), refetchGroups(), refetchActiveRuns(), refetchHistory()]);
     setRefreshing(false);
   };
 
@@ -319,7 +330,7 @@ export default function HomeScreen() {
             </View>
           ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {groups.slice(0, 5).map((group, i) => (
+              {groups.slice(0, 3).map((group, i) => (
                 <GroupCardWithMembers
                   key={group.id}
                   group={group}
@@ -333,13 +344,20 @@ export default function HomeScreen() {
 
         {/* Active group runs */}
         <View className="mb-6">
-          <View className="flex-row items-center gap-2 mb-3">
-            <Ionicons name="radio-outline" size={16} color="#F97316" />
-            <Text className="text-text-primary font-bold text-base">Corridas em andamento</Text>
+          <View className="flex-row items-center justify-between mb-3">
+            <View className="flex-row items-center gap-2">
+              <Ionicons name="radio-outline" size={16} color="#F97316" />
+              <Text className="text-text-primary font-bold text-base">Corridas em andamento</Text>
+            </View>
+            {activeRuns.length > 3 && (
+              <TouchableOpacity onPress={() => router.push('/active-runs')}>
+                <Text className="text-brand-primary text-sm">Ver todas ({activeRuns.length})</Text>
+              </TouchableOpacity>
+            )}
           </View>
-          {groupsLoading ? (
+          {activeRunsLoading ? (
             <ActivityIndicator color="#F97316" />
-          ) : activeGroupRuns.length === 0 ? (
+          ) : activeRuns.length === 0 ? (
             <View className="bg-surface-card rounded-2xl p-5 items-center gap-2">
               <Ionicons name="radio-outline" size={28} color="#52525B" />
               <Text className="text-text-secondary text-sm text-center">
@@ -350,12 +368,12 @@ export default function HomeScreen() {
               </Text>
             </View>
           ) : (
-            activeGroupRuns.slice(0, 5).map((group) => (
+            visibleActiveRuns.map((run) => (
               <ActiveGroupRunCard
-                key={group.id}
-                group={group}
+                key={run.sessionId}
+                run={run}
                 disabled={isJoiningSession}
-                onPress={() => joinSession(group.activeSessionId!)}
+                onPress={() => joinSession(run.sessionId)}
               />
             ))
           )}

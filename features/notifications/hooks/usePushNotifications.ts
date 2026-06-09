@@ -7,6 +7,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@store/auth.store';
 import { useSessionStore } from '@store/session.store';
 import { sessionsService } from '@features/sessions/services/sessions.service';
+import { ACTIVE_RUNS_KEY } from '@features/sessions/hooks/useActiveRuns';
 import { GROUPS_KEY } from '@features/groups/hooks/useGroups';
 import { notificationsService } from '../services/notifications.service';
 import { routePushDeepLink } from '../utils/pushDeepLink';
@@ -27,11 +28,12 @@ export function usePushNotifications() {
     const getLink = (data?: Record<string, unknown> | null): string | undefined =>
       (data?.deepLink ?? data?.url) as string | undefined;
 
-    // A group run starting (runpack://groups/{id}) or finishing (runpack://runs/{id})
+    // A group run starting (runpack://sessions/{id}) or finishing (runpack://runs/{id})
     // changes the home "corridas em andamento" list — refresh groups so it stays live.
     const refreshActiveRunsIfRelevant = (data?: Record<string, unknown> | null) => {
       const link = getLink(data);
-      if (link && (link.startsWith('runpack://groups/') || link.startsWith('runpack://runs/'))) {
+      if (link && (link.startsWith('runpack://sessions/') || link.startsWith('runpack://runs/'))) {
+        queryClient.invalidateQueries({ queryKey: ACTIVE_RUNS_KEY });
         queryClient.invalidateQueries({ queryKey: GROUPS_KEY });
       }
     };

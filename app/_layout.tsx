@@ -39,6 +39,7 @@ function AppNavigator() {
       <Stack.Screen name="invite/[token]" />
       <Stack.Screen name="invite/invalid" />
       <Stack.Screen name="achievements" />
+      <Stack.Screen name="active-runs" />
     </Stack>
   );
 }

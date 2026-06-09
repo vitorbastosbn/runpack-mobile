@@ -30,6 +30,14 @@ export interface SessionDetail {
   participants: SessionParticipant[];
 }
 
+export interface ActiveRun {
+  sessionId: string;
+  groupId: string;
+  groupName: string;
+  participantCount: number;
+  startedAt: string;
+}
+
 export interface RankingEntry {
   userId: string;
   username: string;

@@ -6,6 +6,7 @@ import { WS_BASE_URL } from '@constants/api';
 import { useAuthStore } from '@store/auth.store';
 import { useSessionStore } from '@store/session.store';
 import { GROUPS_KEY } from '@features/groups/hooks/useGroups';
+import { ACTIVE_RUNS_KEY } from './useActiveRuns';
 import type { RankingEntry } from '../types';
 
 const WS_URL = WS_BASE_URL;
@@ -151,6 +152,7 @@ export function useLiveSession() {
         break;
       case 'session_finished':
         // Run ended — drop it from home's "corridas em andamento".
+        queryClient.invalidateQueries({ queryKey: ACTIVE_RUNS_KEY });
         queryClient.invalidateQueries({ queryKey: GROUPS_KEY });
         router.replace('/(modal)/run-summary');
         break;
