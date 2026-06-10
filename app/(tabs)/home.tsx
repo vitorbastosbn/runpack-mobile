@@ -243,6 +243,28 @@ export default function HomeScreen() {
 
   return (
     <View className="flex-1 bg-surface-bg">
+      {/* Fixed header */}
+      <View className="px-5 pt-14 pb-4 flex-row items-center justify-between bg-surface-bg">
+        <View className="flex-1 mr-4">
+          <Text className="text-text-secondary text-sm">Bem-vindo de volta,</Text>
+          <Text className="text-text-primary text-2xl font-bold" numberOfLines={1}>
+            {firstName || 'Corredor'}
+          </Text>
+        </View>
+        <TouchableOpacity
+          onPress={() => router.push('/(tabs)/profile')}
+          activeOpacity={0.8}
+        >
+          <View className="p-0.5 rounded-full border-2 border-brand-primary">
+            <Avatar
+              name={profile?.name ?? user?.name ?? '?'}
+              avatarUrl={profile?.avatarUrl}
+              size={42}
+            />
+          </View>
+        </TouchableOpacity>
+      </View>
+
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }}
         refreshControl={
@@ -250,27 +272,6 @@ export default function HomeScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View className="pt-16 pb-6 flex-row items-center justify-between">
-          <View className="flex-1 mr-4">
-            <Text className="text-text-secondary text-sm">Bem-vindo de volta,</Text>
-            <Text className="text-text-primary text-2xl font-bold" numberOfLines={1}>
-              {firstName || 'Corredor'}
-            </Text>
-          </View>
-          <TouchableOpacity
-            onPress={() => router.push('/(tabs)/profile')}
-            activeOpacity={0.8}
-          >
-            <View className="p-0.5 rounded-full border-2 border-brand-primary">
-              <Avatar
-                name={profile?.name ?? user?.name ?? '?'}
-                avatarUrl={profile?.avatarUrl}
-                size={42}
-              />
-            </View>
-          </TouchableOpacity>
-        </View>
 
         {/* Active session banner */}
         {sessionId && (

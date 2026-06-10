@@ -16,4 +16,13 @@ export const profileService = {
     const { data } = await http.get('/users/me/stats', { params: { period: '8w' } });
     return data;
   },
+
+  async updateUsername(username: string): Promise<UserProfile> {
+    const { data } = await http.patch('/users/me', { username });
+    return data;
+  },
+
+  async deleteAccount(): Promise<void> {
+    await http.delete('/users/me');
+  },
 };
