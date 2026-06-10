@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert, Share } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import {
   useGroup,
   useGroupMembers,
@@ -11,10 +12,10 @@ import {
 } from '@features/groups/hooks/useGroups';
 import { useAuthStore } from '@store/auth.store';
 import { Avatar } from '@shared/components/Avatar';
-import { ScreenHeader } from '@shared/components/ScreenHeader';
 import { SectionLabel } from '@shared/components/SectionLabel';
 import { Fab } from '@shared/components/Fab';
 import { MoreMenu, type MoreMenuItem } from '@shared/components/MoreMenu';
+import { GroupImage } from '@shared/components/GroupImage';
 import { colors } from '@constants/theme';
 import { RunPodium } from '@features/groups/components/RunPodium';
 import { invitesService } from '@features/invites/services/invites.service';
@@ -44,7 +45,7 @@ export default function GroupDetailScreen() {
   const { joinSession, isLoading: joiningSession } = useJoinSession();
 
   const isAdmin = group?.myRole === 'admin';
-  const admins = members.filter((m) => m.role === 'admin');
+  const live = !!group?.activeSessionId;
 
   const handleShareInvite = async () => {
     try {
@@ -117,70 +118,90 @@ export default function GroupDetailScreen() {
     Alert.alert(member.name, undefined, options);
   };
 
-  const renderMember = useCallback(({ item }: { item: GroupMember }) => (
-    <TouchableOpacity
-      className="flex-row items-center px-4 py-3 mb-2 bg-surface-card rounded-[20px]"
-      onPress={() => handleMemberAction(item)}
-      activeOpacity={isAdmin || item.userId === currentUserId ? 0.7 : 1}
-    >
-      <View className="mr-3">
+  const renderMember = useCallback(({ item }: { item: GroupMember }) => {
+    const tappable = isAdmin || item.userId === currentUserId;
+    return (
+      <TouchableOpacity
+        className="flex-row items-center px-5 py-3"
+        onPress={() => handleMemberAction(item)}
+        activeOpacity={tappable ? 0.7 : 1}
+      >
         <Avatar name={item.name} avatarUrl={item.avatarUrl} />
-      </View>
-      <View className="flex-1">
-        <Text className="text-text-primary font-semibold text-[15px]">
-          {item.name}{item.userId === currentUserId ? ' (você)' : ''}
-        </Text>
-        <Text className="text-text-secondary text-xs mt-0.5">{item.username}</Text>
-      </View>
-      {item.role === 'admin' && (
-        <View className="px-2 py-0.5 rounded-full bg-surface-elevated">
-          <Text
-            className="text-brand-primary text-[10px] font-bold uppercase"
-            style={{ letterSpacing: 0.5 }}
-          >
-            Admin
+        <View className="flex-1 ml-3 mr-2">
+          <Text className="text-text-primary font-semibold text-[15px]" numberOfLines={1}>
+            {item.name}{item.userId === currentUserId ? ' (você)' : ''}
+          </Text>
+          <Text className="text-text-secondary text-xs mt-0.5" numberOfLines={1}>
+            {item.username}
           </Text>
         </View>
-      )}
-    </TouchableOpacity>
-  ), [isAdmin, currentUserId, removeMember, updateRole]);
-
-  const listHeader = (
-    <>
-      {/* Group info card: optional description + admin */}
-      {(group?.description || admins.length > 0) && (
-        <View className="bg-surface-card rounded-[20px] p-5 mb-7">
-          {group?.description ? (
-            <Text className="text-text-primary text-sm leading-5">{group.description}</Text>
-          ) : null}
-
-          {admins.length > 0 && (
-            <View
-              className={`flex-row items-center ${
-                group?.description ? 'mt-4 pt-4 border-t border-surface-border' : ''
-              }`}
+        {item.role === 'admin' && (
+          <View className="px-2 py-0.5 rounded-full bg-surface-elevated">
+            <Text
+              className="text-brand-primary text-[10px] font-bold uppercase"
+              style={{ letterSpacing: 0.5 }}
             >
-              <Avatar name={admins[0].name} avatarUrl={admins[0].avatarUrl} size={28} />
-              <View className="flex-1 ml-3">
-                <Text
-                  className="text-text-secondary text-[10px] font-semibold uppercase"
-                  style={{ letterSpacing: 1 }}
-                >
-                  {admins.length > 1 ? 'Administradores' : 'Administrador'}
-                </Text>
-                <Text className="text-text-primary text-sm font-semibold mt-0.5" numberOfLines={1}>
-                  {admins[0].name}
-                  {admins.length > 1 ? ` +${admins.length - 1}` : ''}
-                </Text>
-              </View>
-            </View>
-          )}
-        </View>
-      )}
+              Admin
+            </Text>
+          </View>
+        )}
+        {tappable && (
+          <Ionicons
+            name="chevron-forward"
+            size={14}
+            color={colors.text.disabled}
+            style={{ marginLeft: 8 }}
+          />
+        )}
+      </TouchableOpacity>
+    );
+  }, [isAdmin, currentUserId, removeMember, updateRole]);
+
+  const memberSeparator = useCallback(
+    () => <View style={{ height: 0.5, backgroundColor: colors.surface.border, marginLeft: 72 }} />,
+    [],
+  );
+
+  const listHeader = group ? (
+    <>
+      {/* Hero — monogram identity */}
+      <View className="items-center px-6 pt-2 pb-6">
+        <GroupImage groupId={group.id} imageUrl={group.imageUrl} size={76} radius={24} />
+
+        <Text
+          className="text-text-primary text-[24px] font-extrabold tracking-tight mt-4 text-center"
+          numberOfLines={2}
+        >
+          {group.name}
+        </Text>
+
+        {live ? (
+          <View className="flex-row items-center gap-1.5 mt-2">
+            <View className="w-1.5 h-1.5 rounded-full bg-status-success" />
+            <Text
+              className="text-status-success text-[11px] font-bold uppercase"
+              style={{ letterSpacing: 1.2 }}
+            >
+              Corrida em andamento
+            </Text>
+          </View>
+        ) : (
+          <Text className="text-text-secondary text-[13px] mt-1.5">
+            {group.memberCount} {group.memberCount === 1 ? 'membro' : 'membros'}
+            {isAdmin ? ' · você é admin' : ''}
+          </Text>
+        )}
+
+        {group.description ? (
+          <Text className="text-text-secondary text-[14px] leading-[21px] text-center mt-4">
+            {group.description}
+          </Text>
+        ) : null}
+      </View>
 
       {/* Last-run podium + history access */}
       {lastRun && lastRun.podium.length > 0 && (
-        <View className="mb-7">
+        <View className="px-5 mb-7">
           <SectionLabel
             label="Último resultado"
             action="Histórico"
@@ -192,9 +213,11 @@ export default function GroupDetailScreen() {
         </View>
       )}
 
-      <SectionLabel label="Membros" />
+      <View className="px-5 mb-1">
+        <SectionLabel label={`Membros · ${group.memberCount}`} />
+      </View>
     </>
-  );
+  ) : null;
 
   if (loadingGroup) {
     return (
@@ -206,31 +229,37 @@ export default function GroupDetailScreen() {
 
   return (
     <View className="flex-1 bg-surface-bg">
-      <ScreenHeader
-        title={group?.name ?? ''}
-        subtitle={`${group?.memberCount} ${group?.memberCount === 1 ? 'membro' : 'membros'}`}
-        onBack={() => router.replace('/(tabs)/groups')}
-        right={
-          <MoreMenu
-            shape="full"
-            accessibilityLabel="Opções do grupo"
-            items={[
-              { label: 'Convidar para o grupo', icon: 'person-add-outline', onPress: handleShareInvite },
-              { label: 'Sair do grupo', icon: 'exit-outline', destructive: true, onPress: handleLeaveGroup },
-              ...(isAdmin
-                ? [{ label: 'Deletar grupo', icon: 'trash-outline', destructive: true, onPress: handleDelete } as MoreMenuItem]
-                : []),
-            ]}
-          />
-        }
-      />
+      {/* Slim nav — title lives in the hero */}
+      <View className="px-5 pt-14 pb-4 flex-row items-center justify-between">
+        <TouchableOpacity
+          onPress={() => router.replace('/(tabs)/groups')}
+          hitSlop={8}
+          className="w-9 h-9 rounded-full bg-surface-card items-center justify-center"
+          accessibilityRole="button"
+          accessibilityLabel="Voltar"
+        >
+          <Ionicons name="chevron-back" size={20} color={colors.text.primary} />
+        </TouchableOpacity>
+        <MoreMenu
+          shape="full"
+          accessibilityLabel="Opções do grupo"
+          items={[
+            { label: 'Convidar para o grupo', icon: 'person-add-outline', onPress: handleShareInvite },
+            { label: 'Sair do grupo', icon: 'exit-outline', destructive: true, onPress: handleLeaveGroup },
+            ...(isAdmin
+              ? [{ label: 'Deletar grupo', icon: 'trash-outline', destructive: true, onPress: handleDelete } as MoreMenuItem]
+              : []),
+          ]}
+        />
+      </View>
 
       <FlatList
         data={members}
         keyExtractor={(item) => item.memberId}
         renderItem={renderMember}
+        ItemSeparatorComponent={memberSeparator}
         ListHeaderComponent={listHeader}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 110 }}
+        contentContainerStyle={{ paddingBottom: 110 }}
         ListEmptyComponent={
           loadingMembers ? <ActivityIndicator color={colors.brand.primary} style={{ marginTop: 16 }} /> : null
         }
