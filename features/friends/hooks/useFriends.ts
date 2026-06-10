@@ -72,5 +72,33 @@ export function useFriendActions() {
     onSuccess: invalidate,
   });
 
-  return { sendRequest, acceptRequest, rejectRequest, removeFriend };
+  const updateFavorite = useMutation({
+    mutationFn: ({ id, favorite }: { id: string; favorite: boolean }) =>
+      friendsService.updateFavorite(id, favorite),
+    onMutate: async ({ id, favorite }) => {
+      await queryClient.cancelQueries({ queryKey: FRIENDS_KEY });
+      const prev = queryClient.getQueryData(FRIENDS_KEY);
+
+      queryClient.setQueryData(FRIENDS_KEY, (data: any) => {
+        if (!data?.pages) return data;
+        return {
+          ...data,
+          pages: data.pages.map((page: Page<Friendship>) => ({
+            ...page,
+            content: page.content.map((friend) =>
+              friend.id === id ? { ...friend, favorite } : friend,
+            ),
+          })),
+        };
+      });
+
+      return { prev };
+    },
+    onError: (_error, _variables, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(FRIENDS_KEY, ctx.prev);
+    },
+    onSuccess: invalidate,
+  });
+
+  return { sendRequest, acceptRequest, rejectRequest, removeFriend, updateFavorite };
 }

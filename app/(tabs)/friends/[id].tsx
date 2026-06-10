@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Alert, Image, ScrollView, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,11 +22,12 @@ const ACHIEVEMENT_ICONS: Record<string, string> = {
 export default function FriendProfileScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { id, friendshipId } = useLocalSearchParams<{ id: string; friendshipId?: string }>();
+  const { id, friendshipId, favorite } = useLocalSearchParams<{ id: string; friendshipId?: string; favorite?: string }>();
+  const [isFavorite, setIsFavorite] = useState(favorite === '1');
 
   const { data: profile, isLoading, isError, refetch } = useUserProfile(id);
   const { data: achievements = [], isLoading: loadingAchievements } = useUserAchievements(id);
-  const { removeFriend } = useFriendActions();
+  const { removeFriend, updateFavorite } = useFriendActions();
 
   const handleRemoveFriend = () => {
     if (!friendshipId) return;
@@ -70,6 +72,16 @@ export default function FriendProfileScreen() {
   }
 
   const displayedAchievements = achievements.slice(0, 6);
+
+  const handleToggleFavorite = () => {
+    if (!friendshipId) return;
+    const next = !isFavorite;
+    setIsFavorite(next);
+    updateFavorite.mutate(
+      { id: friendshipId, favorite: next },
+      { onError: () => setIsFavorite(!next) },
+    );
+  };
 
   return (
     <View className="flex-1 bg-surface-bg">
@@ -159,7 +171,23 @@ export default function FriendProfileScreen() {
         </View>
 
         {!!friendshipId && (
-          <View className="mx-5">
+          <View className="mx-5 gap-3">
+            <TouchableOpacity
+              onPress={handleToggleFavorite}
+              disabled={updateFavorite.isPending}
+              className={`bg-surface-card border rounded-2xl py-4 px-4 flex-row items-center justify-center gap-2 ${
+                isFavorite ? 'border-brand-amber' : 'border-surface-border'
+              }`}
+            >
+              <Ionicons
+                name={isFavorite ? 'star' : 'star-outline'}
+                size={20}
+                color={isFavorite ? '#FACC15' : '#A1A1AA'}
+              />
+              <Text className={isFavorite ? 'text-brand-amber font-semibold' : 'text-text-primary font-semibold'}>
+                {isFavorite ? 'Acompanhando corridas' : 'Acompanhar corridas'}
+              </Text>
+            </TouchableOpacity>
             <TouchableOpacity
               onPress={handleRemoveFriend}
               disabled={removeFriend.isPending}

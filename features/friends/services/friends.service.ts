@@ -28,6 +28,11 @@ export const friendsService = {
     return data;
   },
 
+  async updateFavorite(id: string, favorite: boolean): Promise<Friendship> {
+    const { data } = await http.patch<Friendship>(`/friendships/${id}/favorite`, { favorite });
+    return data;
+  },
+
   async deleteFriendship(id: string): Promise<void> {
     await http.delete(`/friendships/${id}`);
   },

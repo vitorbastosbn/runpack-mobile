@@ -24,25 +24,44 @@ export default function FriendsScreen() {
   const friends = friendsData?.pages.flatMap((p) => p.content) ?? [];
   const { data: requestCount = 0 } = useFriendRequestsCount();
   const { data: searchResults = [], isFetching: searching } = useUserSearch(debouncedQuery);
-  const { sendRequest } = useFriendActions();
+  const { sendRequest, updateFavorite } = useFriendActions();
 
   const isSearching = debouncedQuery.trim().length >= 2;
 
   const renderFriend = useCallback(({ item }: { item: Friendship }) => (
-    <TouchableOpacity
-      onPress={() => router.push(`/(tabs)/friends/${item.user.id}?friendshipId=${item.id}`)}
+    <View
       className="flex-row items-center bg-surface-card border border-surface-border rounded-xl px-4 py-3 mb-2"
     >
-      <View className="mr-3">
-        <Avatar name={item.user.name} avatarUrl={item.user.avatarUrl} />
-      </View>
-      <View className="flex-1">
-        <Text className="text-text-primary font-semibold">{item.user.name}</Text>
-        <Text className="text-text-secondary text-xs">{item.user.username}</Text>
-      </View>
+      <TouchableOpacity
+        onPress={() => router.push(`/(tabs)/friends/${item.user.id}?friendshipId=${item.id}&favorite=${item.favorite ? '1' : '0'}`)}
+        className="flex-row items-center flex-1"
+        activeOpacity={0.75}
+      >
+        <View className="mr-3">
+          <Avatar name={item.user.name} avatarUrl={item.user.avatarUrl} />
+        </View>
+        <View className="flex-1">
+          <Text className="text-text-primary font-semibold">{item.user.name}</Text>
+          <Text className="text-text-secondary text-xs">{item.user.username}</Text>
+        </View>
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => updateFavorite.mutate({ id: item.id, favorite: !item.favorite })}
+        disabled={updateFavorite.isPending}
+        hitSlop={10}
+        className="w-10 h-10 items-center justify-center"
+        accessibilityRole="button"
+        accessibilityLabel={item.favorite ? 'Parar de acompanhar corridas' : 'Acompanhar corridas'}
+      >
+        <Ionicons
+          name={item.favorite ? 'star' : 'star-outline'}
+          size={22}
+          color={item.favorite ? '#FACC15' : '#A1A1AA'}
+        />
+      </TouchableOpacity>
       <Ionicons name="chevron-forward" size={16} color="#A1A1AA" />
-    </TouchableOpacity>
-  ), [router]);
+    </View>
+  ), [router, updateFavorite]);
 
   const renderSearchResult = useCallback(({ item }: { item: UserSearchResult }) => {
     const isPendingSent = item.relation === 'pending_sent' || sentIds.has(item.id);
@@ -66,7 +85,7 @@ export default function FriendsScreen() {
         </View>
         {isAccepted ? (
           <TouchableOpacity
-            onPress={() => router.push(`/(tabs)/friends/${item.id}?friendshipId=${item.friendshipId}`)}
+            onPress={() => router.push(`/(tabs)/friends/${item.id}?friendshipId=${item.friendshipId}&favorite=${item.favorite ? '1' : '0'}`)}
             className="px-3 py-1.5 rounded-lg bg-surface-elevated flex-row items-center gap-1"
           >
             <Text className="text-xs font-semibold text-status-success">Amigos</Text>

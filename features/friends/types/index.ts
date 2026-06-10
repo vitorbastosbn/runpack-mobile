@@ -12,6 +12,7 @@ export interface Friendship {
   id: string;
   user: FriendUser;
   status: FriendshipStatus;
+  favorite: boolean;
   createdAt: string;
 }
 
@@ -22,4 +23,5 @@ export interface UserSearchResult {
   avatarUrl: string | null;
   friendshipId: string | null;
   relation: FriendshipRelation;
+  favorite: boolean;
 }
