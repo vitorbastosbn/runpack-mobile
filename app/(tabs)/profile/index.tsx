@@ -7,54 +7,236 @@ import { useMyProfile } from '@features/profile/hooks/useMyProfile';
 import { useWeeklyStats } from '@features/profile/hooks/useWeeklyStats';
 import { useMyAchievements } from '@features/achievements/hooks/useMyAchievements';
 import { SectionLabel } from '@shared/components/SectionLabel';
-import { EmptyState } from '@shared/components/EmptyState';
 import { colors } from '@constants/theme';
 import { formatDistance, formatPace } from '@shared/utils/format';
 
-const ACHIEVEMENT_ICONS: Record<string, string> = {
-  first_run: 'footsteps',
-  first_group_run: 'people',
-  five_runs: 'medal',
-  ten_km_total: 'trending-up',
-  fifty_km_total: 'rocket',
-  three_weeks_streak: 'flame',
-  podium: 'trophy',
-  fast_five: 'flash',
-};
+type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
-function WeekBar({ distanceM, maxDistance }: { distanceM: number; maxDistance: number }) {
-  const pct = maxDistance > 0 ? (distanceM / maxDistance) * 100 : 0;
-  const hasRun = distanceM > 0;
+// Catálogo fechado do MVP — permite exibir conquistas bloqueadas como objetivo.
+const ACHIEVEMENT_CATALOG: { slug: string; name: string; icon: IoniconsName }[] = [
+  { slug: 'first_run', name: 'Primeira corrida', icon: 'footsteps' },
+  { slug: 'first_group_run', name: 'Em grupo', icon: 'people' },
+  { slug: 'five_runs', name: '5 corridas', icon: 'medal' },
+  { slug: 'ten_km_total', name: '10 km no total', icon: 'trending-up' },
+  { slug: 'fifty_km_total', name: '50 km no total', icon: 'rocket' },
+  { slug: 'three_weeks_streak', name: '3 semanas seguidas', icon: 'flame' },
+  { slug: 'podium', name: 'Pódio', icon: 'trophy' },
+  { slug: 'fast_five', name: '5 km em 30 min', icon: 'flash' },
+];
+
+function formatMemberSince(iso: string): string {
+  return new Date(iso).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }).replace('.', '');
+}
+
+function formatKm(totalDistanceM: number): string {
+  const km = totalDistanceM / 1000;
+  return km.toLocaleString('pt-BR', {
+    minimumFractionDigits: km > 0 && km < 100 ? 1 : 0,
+    maximumFractionDigits: km < 100 ? 1 : 0,
+  });
+}
+
+/* ---------------------------------- blocks --------------------------------- */
+
+function IdentityHeader({
+  name,
+  username,
+  avatarUrl,
+  createdAt,
+}: {
+  name: string;
+  username: string;
+  avatarUrl?: string | null;
+  createdAt: string;
+}) {
   return (
-    <View className="flex-1 justify-end h-20 mx-0.5">
+    <View className="flex-row items-center px-5 gap-4">
+      {avatarUrl ? (
+        <Image source={{ uri: avatarUrl }} className="w-16 h-16 rounded-full" />
+      ) : (
+        <View className="w-16 h-16 rounded-full bg-surface-elevated items-center justify-center">
+          <Text className="text-text-primary text-2xl font-bold">
+            {name.charAt(0).toUpperCase()}
+          </Text>
+        </View>
+      )}
+      <View className="flex-1">
+        <Text className="text-text-primary text-[24px] font-extrabold tracking-tight" numberOfLines={1}>
+          {name}
+        </Text>
+        <Text className="text-text-secondary text-[13px] mt-0.5" numberOfLines={1}>
+          @{username} · desde {formatMemberSince(createdAt)}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+function Odometer({ totalDistanceM }: { totalDistanceM: number }) {
+  return (
+    <View className="px-5 pt-9 pb-8">
+      <View className="flex-row items-baseline">
+        <Text
+          className="text-text-primary font-extrabold"
+          style={{ fontSize: 64, lineHeight: 68, letterSpacing: -2.5, fontVariant: ['tabular-nums'] }}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+        >
+          {formatKm(totalDistanceM)}
+        </Text>
+        <Text className="text-brand-primary text-2xl font-extrabold ml-1.5">km</Text>
+      </View>
+      <Text
+        className="text-text-secondary text-[11px] font-semibold uppercase mt-1"
+        style={{ letterSpacing: 1.6 }}
+      >
+        Percorridos até hoje
+      </Text>
+    </View>
+  );
+}
+
+function StatStrip({
+  totalRuns,
+  bestPaceSkm,
+  activeWeeks,
+}: {
+  totalRuns: number;
+  bestPaceSkm: number;
+  activeWeeks: number | null;
+}) {
+  const items: { label: string; value: string }[] = [
+    { label: 'Corridas', value: String(totalRuns) },
+    { label: 'Melhor pace', value: bestPaceSkm > 0 ? formatPace(bestPaceSkm) : '--:--' },
+    ...(activeWeeks != null ? [{ label: 'Semanas ativas', value: `${activeWeeks}/8` }] : []),
+  ];
+
+  return (
+    <View className="mx-5 bg-surface-card rounded-[20px] flex-row py-5">
+      {items.map((item, i) => (
+        <View
+          key={item.label}
+          className={`flex-1 items-center ${i > 0 ? 'border-l border-surface-border' : ''}`}
+        >
+          <Text
+            className="text-text-primary text-lg font-extrabold"
+            style={{ fontVariant: ['tabular-nums'] }}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+          >
+            {item.value}
+          </Text>
+          <Text
+            className="text-text-secondary text-[10px] font-semibold uppercase mt-1"
+            style={{ letterSpacing: 0.8 }}
+          >
+            {item.label}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+function WeeklyChart({
+  weeklyStats,
+}: {
+  weeklyStats: { weekStart: string; totalDistanceM: number }[];
+}) {
+  const maxWeekDistance = Math.max(...weeklyStats.map((w) => w.totalDistanceM), 1);
+  const periodTotalM = weeklyStats.reduce((acc, w) => acc + w.totalDistanceM, 0);
+  const bestIdx = weeklyStats.reduce(
+    (best, w, i) => (w.totalDistanceM > weeklyStats[best].totalDistanceM ? i : best),
+    0,
+  );
+
+  return (
+    <View className="bg-surface-card rounded-[20px] p-5">
+      <View className="flex-row items-end h-24 gap-1.5">
+        {weeklyStats.map((w, i) => {
+          const pct = (w.totalDistanceM / maxWeekDistance) * 100;
+          const isBest = i === bestIdx && w.totalDistanceM > 0;
+          return (
+            <View key={w.weekStart} className="flex-1 justify-end h-full">
+              <View
+                className={`rounded-full w-full ${isBest ? 'bg-brand-primary' : w.totalDistanceM > 0 ? 'bg-surface-elevated' : ''}`}
+                style={{
+                  height: `${Math.max(pct, 5)}%`,
+                  backgroundColor: w.totalDistanceM === 0 ? '#17171B' : undefined,
+                }}
+              />
+            </View>
+          );
+        })}
+      </View>
+
+      <View className="flex-row justify-between items-center mt-4 pt-4 border-t border-surface-border">
+        <View>
+          <Text
+            className="text-text-primary text-base font-extrabold"
+            style={{ fontVariant: ['tabular-nums'] }}
+          >
+            {formatDistance(periodTotalM)}
+          </Text>
+          <Text className="text-text-secondary text-[11px] mt-0.5">nas últimas 8 semanas</Text>
+        </View>
+        {weeklyStats[bestIdx].totalDistanceM > 0 && (
+          <View className="items-end">
+            <View className="flex-row items-center gap-1.5">
+              <View className="w-1.5 h-1.5 rounded-full bg-brand-primary" />
+              <Text
+                className="text-text-primary text-base font-extrabold"
+                style={{ fontVariant: ['tabular-nums'] }}
+              >
+                {formatDistance(weeklyStats[bestIdx].totalDistanceM)}
+              </Text>
+            </View>
+            <Text className="text-text-secondary text-[11px] mt-0.5">melhor semana</Text>
+          </View>
+        )}
+      </View>
+    </View>
+  );
+}
+
+function AchievementTile({
+  name,
+  icon,
+  unlocked,
+}: {
+  name: string;
+  icon: IoniconsName;
+  unlocked: boolean;
+}) {
+  return (
+    <View
+      className={`bg-surface-card rounded-[20px] items-center justify-center ${unlocked ? '' : 'opacity-60'}`}
+      style={{ aspectRatio: 1, gap: 8 }}
+    >
       <View
-        className={`rounded-full w-full ${hasRun ? 'bg-brand-primary' : 'bg-surface-elevated'}`}
-        style={{ height: `${Math.max(pct, 4)}%` }}
-      />
+        className={`w-11 h-11 rounded-full items-center justify-center ${
+          unlocked ? 'bg-surface-elevated' : ''
+        }`}
+        style={unlocked ? undefined : { backgroundColor: '#17171B' }}
+      >
+        <Ionicons
+          name={unlocked ? icon : 'lock-closed'}
+          size={unlocked ? 20 : 16}
+          color={unlocked ? colors.brand.primary : colors.text.disabled}
+        />
+      </View>
+      <Text
+        className={`text-xs font-semibold text-center ${unlocked ? 'text-text-primary' : 'text-text-disabled'}`}
+        numberOfLines={2}
+        style={{ paddingHorizontal: 8 }}
+      >
+        {name}
+      </Text>
     </View>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string | number }) {
-  return (
-    <View className="flex-1 bg-surface-card rounded-[20px] px-3 py-4 items-center">
-      <Text
-        className="text-text-primary text-xl font-extrabold"
-        style={{ fontVariant: ['tabular-nums'] }}
-        numberOfLines={1}
-        adjustsFontSizeToFit
-      >
-        {value}
-      </Text>
-      <Text
-        className="text-text-secondary text-[10px] font-semibold uppercase mt-1"
-        style={{ letterSpacing: 1 }}
-      >
-        {label}
-      </Text>
-    </View>
-  );
-}
+/* ---------------------------------- screen --------------------------------- */
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -70,13 +252,16 @@ export default function ProfileScreen() {
     );
   }
 
-  const maxWeekDistance = Math.max(...(weeklyStats?.map((w) => w.totalDistanceM) ?? [0]), 1);
-  const periodTotalM = weeklyStats?.reduce((acc, w) => acc + w.totalDistanceM, 0) ?? 0;
+  const activeWeeks = weeklyStats
+    ? weeklyStats.filter((w) => w.totalDistanceM > 0).length
+    : null;
+  const unlockedSlugs = new Set((achievements ?? []).map((a) => a.slug));
+  const unlockedCount = ACHIEVEMENT_CATALOG.filter((c) => unlockedSlugs.has(c.slug)).length;
 
   return (
     <View className="flex-1 bg-surface-bg">
-      {/* Header */}
-      <View className="flex-row items-center justify-end px-5 pt-14 pb-2">
+      {/* Top bar */}
+      <View className="flex-row items-center justify-end px-5 pt-14 pb-5">
         <TouchableOpacity
           onPress={() => router.push('/(tabs)/profile/settings')}
           className="w-9 h-9 rounded-full bg-surface-card items-center justify-center"
@@ -93,110 +278,47 @@ export default function ProfileScreen() {
         contentContainerStyle={{ paddingBottom: 60 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Avatar + identity */}
-        <View className="items-center pt-2 pb-7 px-6">
-          {profile.avatarUrl ? (
-            <Image source={{ uri: profile.avatarUrl }} className="w-24 h-24 rounded-full mb-4" />
-          ) : (
-            <View className="w-24 h-24 rounded-full bg-surface-elevated items-center justify-center mb-4">
-              <Text className="text-text-primary text-3xl font-bold">
-                {profile.name.charAt(0).toUpperCase()}
-              </Text>
-            </View>
-          )}
-          <Text className="text-text-primary text-[22px] font-extrabold tracking-tight">{profile.name}</Text>
-          <Text className="text-text-secondary text-sm mt-1">@{profile.username}</Text>
-          <Text className="text-text-disabled text-xs mt-1.5">
-            Membro desde{' '}
-            {new Date(profile.createdAt).toLocaleDateString('pt-BR', {
-              month: 'long',
-              year: 'numeric',
-            })}
-          </Text>
-        </View>
+        <IdentityHeader
+          name={profile.name}
+          username={profile.username}
+          avatarUrl={profile.avatarUrl}
+          createdAt={profile.createdAt}
+        />
 
-        {/* Stats */}
-        <View className="flex-row mx-5 gap-2.5 mb-7">
-          <Stat label="Corridas" value={profile.totalRuns} />
-          <Stat label="Total" value={formatDistance(profile.totalDistanceM)} />
-          <Stat label="Pace" value={profile.bestPaceSkm > 0 ? formatPace(profile.bestPaceSkm) : '--:--'} />
-        </View>
+        <Odometer totalDistanceM={profile.totalDistanceM} />
 
-        {/* Weekly chart */}
+        <StatStrip
+          totalRuns={profile.totalRuns}
+          bestPaceSkm={profile.bestPaceSkm}
+          activeWeeks={activeWeeks}
+        />
+
+        {/* Weekly rhythm */}
         {weeklyStats && weeklyStats.length > 0 && (
-          <View className="mx-5 mb-7">
-            <SectionLabel label="Últimas 8 semanas" />
-            <View className="bg-surface-card rounded-[20px] p-5">
-              <View className="flex-row items-end h-20">
-                {weeklyStats.map((w) => (
-                  <WeekBar key={w.weekStart} distanceM={w.totalDistanceM} maxDistance={maxWeekDistance} />
-                ))}
-              </View>
-              <View className="flex-row justify-between mt-3">
-                <Text className="text-text-disabled text-xs">
-                  {new Date(weeklyStats[0].weekStart).toLocaleDateString('pt-BR', {
-                    day: '2-digit',
-                    month: 'short',
-                  })}
-                </Text>
-                {periodTotalM > 0 && (
-                  <Text className="text-text-secondary text-xs font-semibold">
-                    {formatDistance(periodTotalM)} no período
-                  </Text>
-                )}
-                <Text className="text-text-disabled text-xs">
-                  {new Date(weeklyStats[weeklyStats.length - 1].weekStart).toLocaleDateString('pt-BR', {
-                    day: '2-digit',
-                    month: 'short',
-                  })}
-                </Text>
-              </View>
-            </View>
+          <View className="mx-5 mt-7">
+            <SectionLabel label="Ritmo semanal" />
+            <WeeklyChart weeklyStats={weeklyStats} />
           </View>
         )}
 
-        {/* Achievements */}
-        <View className="mx-5 mb-7">
+        {/* Achievements — full catalog, locked ones as goals */}
+        <View className="mx-5 mt-7">
           <SectionLabel
-            label="Conquistas"
+            label={`Conquistas · ${unlockedCount} de ${ACHIEVEMENT_CATALOG.length}`}
             action="Ver todas"
             onAction={() => router.push('/(tabs)/profile/achievements' as any)}
           />
-
-          {!achievements || achievements.length === 0 ? (
-            <EmptyState
-              card
-              icon="lock-closed-outline"
-              title="Nenhuma conquista ainda"
-              subtitle="Complete corridas para desbloquear conquistas"
-            />
-          ) : (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', margin: -4 }}>
-              {achievements.slice(0, 6).map((a) => (
-                <View key={a.id} style={{ width: '33.33%', padding: 4 }}>
-                  <View
-                    className="bg-surface-card rounded-[20px] items-center justify-center"
-                    style={{ aspectRatio: 1, gap: 8 }}
-                  >
-                    <View className="w-11 h-11 rounded-full bg-surface-elevated items-center justify-center">
-                      <Ionicons
-                        name={(ACHIEVEMENT_ICONS[a.slug] ?? 'star') as any}
-                        size={20}
-                        color={colors.brand.primary}
-                      />
-                    </View>
-                    <Text
-                      className="text-text-primary text-xs font-semibold text-center"
-                      numberOfLines={2}
-                      style={{ paddingHorizontal: 8 }}
-                    >
-                      {a.name}
-                    </Text>
-                  </View>
-                </View>
-              ))}
-            </View>
-          )}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', margin: -4 }}>
+            {ACHIEVEMENT_CATALOG.map((item) => (
+              <View key={item.slug} style={{ width: '25%', padding: 4 }}>
+                <AchievementTile
+                  name={item.name}
+                  icon={item.icon}
+                  unlocked={unlockedSlugs.has(item.slug)}
+                />
+              </View>
+            ))}
+          </View>
         </View>
       </ScrollView>
     </View>
