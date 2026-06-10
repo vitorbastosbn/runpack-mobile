@@ -1,3 +1,5 @@
+import type { TextStyle } from 'react-native';
+
 export const colors = {
   brand: {
     primary: '#FF5A1F',
@@ -38,7 +40,7 @@ export const radius = {
 } as const;
 
 /** Números grandes (tempo, distância, pace) — identidade visual do app. */
-export const numeric = {
-  fontWeight: '800' as const,
-  fontVariant: ['tabular-nums'] as const,
+export const numeric: TextStyle = {
+  fontWeight: '800',
+  fontVariant: ['tabular-nums'],
 };

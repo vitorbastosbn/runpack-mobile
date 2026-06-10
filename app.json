@@ -12,9 +12,10 @@
       "googleServicesFile": "./google-services.json",
       "minSdkVersion": 26,
       "adaptiveIcon": {
-        "backgroundColor": "#000000",
+        "backgroundColor": "#0A0A0C",
         "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png"
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "permissions": [
         "android.permission.ACCESS_COARSE_LOCATION",
@@ -30,7 +31,7 @@
         "expo-notifications",
         {
           "icon": "./assets/notification-icon.png",
-          "color": "#000000"
+          "color": "#FF5A1F"
         }
       ],
       [

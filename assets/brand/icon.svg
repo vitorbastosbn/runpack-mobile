@@ -1,0 +1,38 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- RunPack — "pulso de pace": telemetria que dispara pra cima. -->
+  <defs>
+    <radialGradient id="glow" cx="0.5" cy="0.78" r="0.7">
+      <stop offset="0" stop-color="#FF5A1F" stop-opacity="0.26"/>
+      <stop offset="1" stop-color="#FF5A1F" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="pulse" x1="180" y1="660" x2="844" y2="290" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#D9430F"/>
+      <stop offset="0.55" stop-color="#FF5A1F"/>
+      <stop offset="1" stop-color="#FF7A3D"/>
+    </linearGradient>
+    <filter id="blur" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="42"/>
+    </filter>
+  </defs>
+
+  <!-- fundo: asfalto noturno -->
+  <rect width="1024" height="1024" fill="#0A0A0C"/>
+  <rect width="1024" height="1024" fill="url(#glow)"/>
+
+  <!-- curva da pista, canto inferior esquerdo -->
+  <circle cx="-80" cy="1140" r="620" fill="none" stroke="#F7F7F8" stroke-opacity="0.05" stroke-width="3"/>
+  <circle cx="-80" cy="1140" r="760" fill="none" stroke="#F7F7F8" stroke-opacity="0.04" stroke-width="3"/>
+
+  <!-- brilho atrás do traço -->
+  <path d="M 180 660 H 340 L 450 430 L 575 700 L 844 290"
+        fill="none" stroke="#FF5A1F" stroke-opacity="0.55" stroke-width="150"
+        stroke-linecap="round" stroke-linejoin="round" filter="url(#blur)"/>
+
+  <!-- o pulso -->
+  <path d="M 180 660 H 340 L 450 430 L 575 700 L 844 290"
+        fill="none" stroke="url(#pulse)" stroke-width="112"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- ponto ao vivo: você, agora -->
+  <circle cx="844" cy="290" r="30" fill="#FFFFFF"/>
+</svg>

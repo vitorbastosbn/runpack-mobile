@@ -1,0 +1,23 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- Foreground do adaptive icon — marca dentro da safe zone (66%). -->
+  <defs>
+    <linearGradient id="pulse" x1="180" y1="660" x2="844" y2="290" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#D9430F"/>
+      <stop offset="0.55" stop-color="#FF5A1F"/>
+      <stop offset="1" stop-color="#FF7A3D"/>
+    </linearGradient>
+    <filter id="blur" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="42"/>
+    </filter>
+  </defs>
+
+  <g transform="translate(512 512) scale(0.68) translate(-512 -512)">
+    <path d="M 180 660 H 340 L 450 430 L 575 700 L 844 290"
+          fill="none" stroke="#FF5A1F" stroke-opacity="0.55" stroke-width="150"
+          stroke-linecap="round" stroke-linejoin="round" filter="url(#blur)"/>
+    <path d="M 180 660 H 340 L 450 430 L 575 700 L 844 290"
+          fill="none" stroke="url(#pulse)" stroke-width="112"
+          stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="844" cy="290" r="30" fill="#FFFFFF"/>
+  </g>
+</svg>
