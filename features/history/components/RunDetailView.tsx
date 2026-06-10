@@ -17,7 +17,12 @@ function ParticipantRow({ p, isMe, isLast }: { p: RunParticipantResult; isMe: bo
         isMe ? 'bg-surface-elevated' : ''
       }`}
     >
-      <Text className="text-text-secondary w-8 text-sm">{formatRank(p.finalRank)}</Text>
+      <Text
+        className={`w-8 text-sm font-extrabold ${isMe ? 'text-brand-primary' : 'text-text-disabled'}`}
+        style={{ fontVariant: ['tabular-nums'] }}
+      >
+        {p.finalRank}
+      </Text>
       <View className="flex-1">
         <Text className={`text-sm font-semibold ${isMe ? 'text-brand-primary' : 'text-text-primary'}`}>
           {p.name}{isMe ? ' (você)' : ''}
@@ -33,27 +38,6 @@ function ParticipantRow({ p, isMe, isLast }: { p: RunParticipantResult; isMe: bo
         </Text>
         <Text className="text-text-secondary text-xs mt-0.5">{formatDuration(p.totalTimeMs)}</Text>
       </View>
-    </View>
-  );
-}
-
-function Metric({ label, value }: { label: string; value: string }) {
-  return (
-    <View className="items-center flex-1">
-      <Text
-        className="text-text-primary text-xl font-extrabold"
-        style={{ fontVariant: ['tabular-nums'] }}
-        numberOfLines={1}
-        adjustsFontSizeToFit
-      >
-        {value}
-      </Text>
-      <Text
-        className="text-text-secondary text-[10px] font-semibold uppercase mt-1"
-        style={{ letterSpacing: 1 }}
-      >
-        {label}
-      </Text>
     </View>
   );
 }
@@ -114,35 +98,68 @@ export function RunDetailView({ sessionId }: { sessionId: string }) {
     <View className="flex-1 bg-surface-bg">
       <ShareRunCard ref={cardRef} run={shareRun} />
       <ScreenHeader title={title} subtitle={date} onBack={() => router.back()} />
-      <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
-        {/* My result */}
-        <View className="mx-5 mt-2 mb-7">
-          <View className="bg-surface-card rounded-[20px] p-5">
-            <View className="items-center mb-5">
-              <Text className="text-4xl">{formatRank(myResult.finalRank)}</Text>
-              <Text className="text-text-secondary text-xs mt-1.5">
-                {myResult.finalRank}º de {participants.length} participante{participants.length !== 1 ? 's' : ''}
-              </Text>
-            </View>
-            <View className="flex-row justify-between">
-              <Metric label="Distância" value={formatDistance(myResult.totalDistanceM)} />
-              <Metric label="Tempo" value={formatDuration(myResult.totalTimeMs)} />
-              <Metric label="Pace" value={formatPace(myResult.avgPaceSkm)} />
-            </View>
+
+      <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+        {/* Hero — distance, like the post-run summary */}
+        <View className="items-center pt-8 pb-2">
+          <Text
+            className="text-text-primary font-extrabold"
+            style={{ fontSize: 60, lineHeight: 64, letterSpacing: -2, fontVariant: ['tabular-nums'] }}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+          >
+            {(myResult.totalDistanceM / 1000).toFixed(2)}
+          </Text>
+          <Text
+            className="text-text-secondary text-[11px] font-semibold uppercase"
+            style={{ letterSpacing: 2 }}
+          >
+            Quilômetros
+          </Text>
+        </View>
+
+        {/* Secondary metrics */}
+        <View className="flex-row justify-center gap-12 pt-5 pb-6">
+          <View className="items-center">
+            <Text
+              className="text-text-primary text-xl font-extrabold"
+              style={{ fontVariant: ['tabular-nums'] }}
+            >
+              {formatDuration(myResult.totalTimeMs)}
+            </Text>
+            <Text
+              className="text-text-secondary text-[10px] font-semibold uppercase mt-1"
+              style={{ letterSpacing: 1 }}
+            >
+              Tempo
+            </Text>
           </View>
-          <View className="mt-3">
-            <Button
-              label={isSharing ? 'Preparando imagem...' : 'Compartilhar resultado'}
-              icon="share-social"
-              variant="secondary"
-              onPress={shareRunResult}
-              disabled={isSharing}
-            />
+          <View className="items-center">
+            <Text
+              className="text-text-primary text-xl font-extrabold"
+              style={{ fontVariant: ['tabular-nums'] }}
+            >
+              {formatPace(myResult.avgPaceSkm)}
+            </Text>
+            <Text
+              className="text-text-secondary text-[10px] font-semibold uppercase mt-1"
+              style={{ letterSpacing: 1 }}
+            >
+              Pace
+            </Text>
           </View>
         </View>
 
+        {/* Placement */}
+        <View className="items-center pb-7">
+          <Text className="text-3xl">{formatRank(myResult.finalRank)}</Text>
+          <Text className="text-text-secondary text-xs mt-1.5">
+            {myResult.finalRank}º de {participants.length} participante{participants.length !== 1 ? 's' : ''}
+          </Text>
+        </View>
+
         {/* Ranking */}
-        <View className="mx-5">
+        <View className="mx-5 mb-6">
           <SectionLabel label="Ranking" />
           <View className="bg-surface-card rounded-[20px] overflow-hidden">
             {participants.map((p, i) => (
@@ -154,6 +171,16 @@ export function RunDetailView({ sessionId }: { sessionId: string }) {
               />
             ))}
           </View>
+        </View>
+
+        <View className="mx-5">
+          <Button
+            label={isSharing ? 'Preparando imagem...' : 'Compartilhar resultado'}
+            icon="share-social"
+            variant="secondary"
+            onPress={shareRunResult}
+            disabled={isSharing}
+          />
         </View>
       </ScrollView>
     </View>
