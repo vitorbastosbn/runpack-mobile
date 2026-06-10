@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { colors } from '@constants/theme';
 
 interface StartRaceModalProps {
   visible: boolean;
@@ -79,29 +80,31 @@ export function StartRaceModal({ visible, loading, onClose, onStart }: StartRace
   return (
     <Modal visible={visible} transparent animationType="slide" statusBarTranslucent onRequestClose={onClose}>
       <TouchableWithoutFeedback onPress={loading ? undefined : onClose}>
-        <View className="flex-1 bg-black/60 justify-end">
+        <View className="flex-1 bg-black/70 justify-end">
           <TouchableWithoutFeedback>
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
               <View
-                className="bg-surface-card border-t border-surface-border rounded-t-3xl"
+                className="bg-surface-card rounded-t-[28px]"
                 style={{ height: SCREEN_HEIGHT * 0.48, paddingBottom: insets.bottom + 16 }}
               >
                 {/* Grabber */}
                 <View className="self-center w-10 h-1 rounded-full bg-surface-border mt-3 mb-4" />
 
                 {/* Header */}
-                <View className="flex-row items-center justify-between px-5 mb-1">
-                  <Text className="text-text-primary text-lg font-bold">Meta da corrida</Text>
+                <View className="flex-row items-center justify-between px-6 mb-1">
+                  <Text className="text-text-primary text-lg font-extrabold tracking-tight">
+                    Meta da corrida
+                  </Text>
                   <TouchableOpacity onPress={onClose} hitSlop={10} disabled={loading}>
-                    <Ionicons name="close" size={22} color="#A1A1AA" />
+                    <Ionicons name="close" size={22} color={colors.text.secondary} />
                   </TouchableOpacity>
                 </View>
-                <Text className="text-text-secondary text-sm px-5 mb-3">
+                <Text className="text-text-secondary text-[13px] leading-5 px-6 mb-4">
                   Quando todos atingirem a meta, a corrida encerra automaticamente.
                 </Text>
 
                 {/* Cards grid — rows + columns flex to fill the available space */}
-                <View className="flex-1 px-5 gap-3">
+                <View className="flex-1 px-6 gap-3">
                   {ROWS.map((row, rowIdx) => (
                     <View key={rowIdx} className="flex-row gap-3 flex-1">
                       {row.map((preset) => {
@@ -115,10 +118,8 @@ export function StartRaceModal({ visible, loading, onClose, onStart }: StartRace
                             activeOpacity={0.85}
                             accessibilityRole="button"
                             accessibilityState={{ selected: isSelected }}
-                            className={`flex-1 rounded-2xl border items-center justify-center px-3 ${
-                              isSelected
-                                ? 'bg-brand-primary border-brand-primary'
-                                : 'bg-surface-elevated border-surface-border'
+                            className={`flex-1 rounded-[20px] items-center justify-center px-3 ${
+                              isSelected ? 'bg-brand-primary' : 'bg-surface-elevated'
                             }`}
                           >
                             {isNumeric ? (
@@ -127,6 +128,7 @@ export function StartRaceModal({ visible, loading, onClose, onStart }: StartRace
                                   className={`text-4xl font-extrabold ${
                                     isSelected ? 'text-white' : 'text-text-primary'
                                   }`}
+                                  style={{ fontVariant: ['tabular-nums'] }}
                                 >
                                   {(preset.value as number) / 1000}
                                 </Text>
@@ -142,8 +144,8 @@ export function StartRaceModal({ visible, loading, onClose, onStart }: StartRace
                               <>
                                 <Ionicons
                                   name={preset.value === 'none' ? 'infinite' : 'create-outline'}
-                                  size={30}
-                                  color={isSelected ? '#fff' : '#A1A1AA'}
+                                  size={28}
+                                  color={isSelected ? '#fff' : colors.text.secondary}
                                 />
                                 <Text
                                   className={`text-sm font-semibold mt-1.5 ${
@@ -163,10 +165,10 @@ export function StartRaceModal({ visible, loading, onClose, onStart }: StartRace
 
                 {/* Custom input */}
                 {selected === 'custom' && (
-                  <View className="px-5 mt-3">
+                  <View className="px-6 mt-3">
                     <View
-                      className={`flex-row items-center bg-surface-elevated border rounded-xl px-4 ${
-                        customError ? 'border-status-error' : 'border-surface-border'
+                      className={`flex-row items-center bg-surface-elevated rounded-2xl px-4 ${
+                        customError ? 'border border-status-error' : ''
                       }`}
                     >
                       <TextInput
@@ -174,7 +176,7 @@ export function StartRaceModal({ visible, loading, onClose, onStart }: StartRace
                         onChangeText={setCustomKm}
                         keyboardType="decimal-pad"
                         placeholder="Digite a distância. Ex: 7.5"
-                        placeholderTextColor="#52525B"
+                        placeholderTextColor={colors.text.disabled}
                         editable={!loading}
                         autoFocus
                         className="flex-1 text-text-primary text-base py-3.5"
@@ -190,12 +192,12 @@ export function StartRaceModal({ visible, loading, onClose, onStart }: StartRace
                 )}
 
                 {/* Start CTA — pinned above the nav bar */}
-                <View className="px-5 pt-4">
+                <View className="px-6 pt-4">
                   <TouchableOpacity
                     onPress={handleStart}
                     disabled={!canStart}
                     activeOpacity={0.85}
-                    className={`rounded-xl py-4 flex-row items-center justify-center gap-2 ${
+                    className={`rounded-2xl py-4 flex-row items-center justify-center gap-2 ${
                       canStart ? 'bg-brand-primary' : 'bg-surface-elevated'
                     }`}
                   >
@@ -203,7 +205,7 @@ export function StartRaceModal({ visible, loading, onClose, onStart }: StartRace
                       <ActivityIndicator color="#fff" size="small" />
                     ) : (
                       <>
-                        <Ionicons name="flash" size={18} color={canStart ? '#fff' : '#52525B'} />
+                        <Ionicons name="flash" size={18} color={canStart ? '#fff' : colors.text.disabled} />
                         <Text className={`font-bold ${canStart ? 'text-white' : 'text-text-disabled'}`}>
                           Iniciar corrida
                         </Text>

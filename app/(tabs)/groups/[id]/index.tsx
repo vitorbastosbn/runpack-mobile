@@ -12,6 +12,10 @@ import {
 } from '@features/groups/hooks/useGroups';
 import { useAuthStore } from '@store/auth.store';
 import { Avatar } from '@shared/components/Avatar';
+import { ScreenHeader } from '@shared/components/ScreenHeader';
+import { SectionLabel } from '@shared/components/SectionLabel';
+import { Fab } from '@shared/components/Fab';
+import { colors } from '@constants/theme';
 import { RunPodium } from '@features/groups/components/RunPodium';
 import { invitesService } from '@features/invites/services/invites.service';
 import { useCreateSession, useJoinSession } from '@features/sessions/hooks/useCreateSession';
@@ -49,7 +53,6 @@ export default function GroupDetailScreen() {
       await Share.share({ message: `Entra no meu grupo no RunPack! ${invite.url}` });
     } catch {}
   };
-
 
   const handleDelete = () => {
     Alert.alert('Deletar grupo', `Tem certeza que deseja deletar "${group?.name}"?`, [
@@ -117,7 +120,7 @@ export default function GroupDetailScreen() {
 
   const renderMember = useCallback(({ item }: { item: GroupMember }) => (
     <TouchableOpacity
-      className="flex-row items-center px-4 py-3 mb-2 bg-surface-card border border-surface-border rounded-xl"
+      className="flex-row items-center px-4 py-3 mb-2 bg-surface-card rounded-[20px]"
       onPress={() => handleMemberAction(item)}
       activeOpacity={isAdmin || item.userId === currentUserId ? 0.7 : 1}
     >
@@ -125,14 +128,19 @@ export default function GroupDetailScreen() {
         <Avatar name={item.name} avatarUrl={item.avatarUrl} />
       </View>
       <View className="flex-1">
-        <Text className="text-text-primary font-semibold">
+        <Text className="text-text-primary font-semibold text-[15px]">
           {item.name}{item.userId === currentUserId ? ' (você)' : ''}
         </Text>
-        <Text className="text-text-secondary text-xs">{item.username}</Text>
+        <Text className="text-text-secondary text-xs mt-0.5">{item.username}</Text>
       </View>
       {item.role === 'admin' && (
-        <View className="px-2 py-0.5 rounded bg-brand-primary/20 border border-brand-primary/40">
-          <Text className="text-brand-primary text-xs font-semibold">Admin</Text>
+        <View className="px-2 py-0.5 rounded-full bg-surface-elevated">
+          <Text
+            className="text-brand-primary text-[10px] font-bold uppercase"
+            style={{ letterSpacing: 0.5 }}
+          >
+            Admin
+          </Text>
         </View>
       )}
     </TouchableOpacity>
@@ -142,7 +150,7 @@ export default function GroupDetailScreen() {
     <>
       {/* Group info card: optional description + admin */}
       {(group?.description || admins.length > 0) && (
-        <View className="bg-surface-card border border-surface-border rounded-2xl p-4 mb-6">
+        <View className="bg-surface-card rounded-[20px] p-5 mb-7">
           {group?.description ? (
             <Text className="text-text-primary text-sm leading-5">{group.description}</Text>
           ) : null}
@@ -155,15 +163,17 @@ export default function GroupDetailScreen() {
             >
               <Avatar name={admins[0].name} avatarUrl={admins[0].avatarUrl} size={28} />
               <View className="flex-1 ml-3">
-                <Text className="text-text-secondary text-[11px] uppercase tracking-wider">
+                <Text
+                  className="text-text-secondary text-[10px] font-semibold uppercase"
+                  style={{ letterSpacing: 1 }}
+                >
                   {admins.length > 1 ? 'Administradores' : 'Administrador'}
                 </Text>
-                <Text className="text-text-primary text-sm font-semibold" numberOfLines={1}>
+                <Text className="text-text-primary text-sm font-semibold mt-0.5" numberOfLines={1}>
                   {admins[0].name}
                   {admins.length > 1 ? ` +${admins.length - 1}` : ''}
                 </Text>
               </View>
-              <Ionicons name="shield-checkmark" size={16} color="#F97316" />
             </View>
           )}
         </View>
@@ -171,97 +181,75 @@ export default function GroupDetailScreen() {
 
       {/* Last-run podium + history access */}
       {lastRun && lastRun.podium.length > 0 && (
-        <View className="mb-6">
-          <View className="flex-row items-center justify-between mb-2">
-            <Text className="text-text-secondary text-xs font-semibold uppercase tracking-wider">
-              Último resultado
-            </Text>
-            <TouchableOpacity
-              onPress={() => router.push(`/(tabs)/groups/${id}/runs`)}
-              hitSlop={8}
-              className="flex-row items-center gap-1"
-            >
-              <Text className="text-brand-primary text-sm">Histórico</Text>
-              <Ionicons name="chevron-forward" size={14} color="#F97316" />
-            </TouchableOpacity>
-          </View>
-          <View className="bg-surface-card border border-surface-border rounded-2xl p-4">
+        <View className="mb-7">
+          <SectionLabel
+            label="Último resultado"
+            action="Histórico"
+            onAction={() => router.push(`/(tabs)/groups/${id}/runs`)}
+          />
+          <View className="bg-surface-card rounded-[20px] p-5">
             <RunPodium podium={lastRun.podium} />
           </View>
         </View>
       )}
 
-      <Text className="text-text-secondary text-xs font-semibold uppercase tracking-wider mb-2">
-        Membros
-      </Text>
+      <SectionLabel label="Membros" />
     </>
   );
 
   if (loadingGroup) {
     return (
       <View className="flex-1 bg-surface-bg items-center justify-center">
-        <ActivityIndicator color="#F97316" />
+        <ActivityIndicator color={colors.brand.primary} />
       </View>
     );
   }
 
   return (
     <View className="flex-1 bg-surface-bg">
-      <View className="px-4 pt-14 pb-4 flex-row items-center gap-3">
-        <TouchableOpacity onPress={() => router.replace('/(tabs)/groups')} hitSlop={8}>
-          <Ionicons name="arrow-back" size={24} color="#FAFAFA" />
-        </TouchableOpacity>
-        <View className="flex-1">
-          <Text className="text-text-primary text-xl font-bold" numberOfLines={1}>{group?.name}</Text>
-          <Text className="text-text-secondary text-xs">
-            {group?.memberCount} {group?.memberCount === 1 ? 'membro' : 'membros'}
-          </Text>
-        </View>
-        <TouchableOpacity onPress={() => setMenuVisible(true)} hitSlop={8}>
-          <Ionicons name="ellipsis-horizontal" size={24} color="#FAFAFA" />
-        </TouchableOpacity>
-      </View>
+      <ScreenHeader
+        title={group?.name ?? ''}
+        subtitle={`${group?.memberCount} ${group?.memberCount === 1 ? 'membro' : 'membros'}`}
+        onBack={() => router.replace('/(tabs)/groups')}
+        right={
+          <TouchableOpacity
+            onPress={() => setMenuVisible(true)}
+            hitSlop={8}
+            className="w-9 h-9 rounded-full bg-surface-card items-center justify-center"
+            accessibilityRole="button"
+            accessibilityLabel="Opções do grupo"
+          >
+            <Ionicons name="ellipsis-horizontal" size={18} color={colors.text.primary} />
+          </TouchableOpacity>
+        }
+      />
 
       <FlatList
         data={members}
         keyExtractor={(item) => item.memberId}
         renderItem={renderMember}
         ListHeaderComponent={listHeader}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 110 }}
         ListEmptyComponent={
-          loadingMembers ? <ActivityIndicator color="#F97316" style={{ marginTop: 16 }} /> : null
+          loadingMembers ? <ActivityIndicator color={colors.brand.primary} style={{ marginTop: 16 }} /> : null
         }
       />
 
       {/* FAB — enter active run, or start a new one (admin) */}
       {group?.activeSessionId ? (
-        <TouchableOpacity
-          style={{ position: 'absolute', bottom: 28, right: 20 }}
-          className="w-16 h-16 bg-brand-primary rounded-full items-center justify-center"
+        <Fab
+          icon="enter-outline"
           onPress={() => joinSession(group.activeSessionId!)}
-          disabled={joiningSession}
-          activeOpacity={0.85}
-        >
-          {joiningSession ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <Ionicons name="enter-outline" size={28} color="#fff" />
-          )}
-        </TouchableOpacity>
+          loading={joiningSession}
+          accessibilityLabel="Entrar na corrida"
+        />
       ) : isAdmin ? (
-        <TouchableOpacity
-          style={{ position: 'absolute', bottom: 28, right: 20 }}
-          className="w-16 h-16 bg-brand-primary rounded-full items-center justify-center"
+        <Fab
+          icon="flash"
           onPress={handleStartSession}
-          disabled={startingSession}
-          activeOpacity={0.85}
-        >
-          {startingSession ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <Ionicons name="flash" size={28} color="#fff" />
-          )}
-        </TouchableOpacity>
+          loading={startingSession}
+          accessibilityLabel="Iniciar corrida"
+        />
       ) : null}
 
       <StartRaceModal
@@ -282,18 +270,16 @@ export default function GroupDetailScreen() {
             style={{
               position: 'absolute',
               top: 100,
-              right: 16,
-              backgroundColor: '#27272A',
-              borderRadius: 14,
-              borderWidth: 1,
-              borderColor: '#3F3F46',
+              right: 20,
+              backgroundColor: colors.surface.elevated,
+              borderRadius: 18,
               overflow: 'hidden',
               minWidth: 220,
               shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.4,
-              shadowRadius: 12,
-              elevation: 8,
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.45,
+              shadowRadius: 16,
+              elevation: 10,
             }}
           >
             <TouchableOpacity
@@ -301,31 +287,31 @@ export default function GroupDetailScreen() {
               onPress={() => { setMenuVisible(false); handleShareInvite(); }}
               activeOpacity={0.7}
             >
-              <Ionicons name="person-add-outline" size={18} color="#FAFAFA" />
-              <Text style={{ color: '#FAFAFA', fontSize: 15 }}>Convidar para o grupo</Text>
+              <Ionicons name="person-add-outline" size={18} color={colors.text.primary} />
+              <Text style={{ color: colors.text.primary, fontSize: 15 }}>Convidar para o grupo</Text>
             </TouchableOpacity>
 
-            <View style={{ height: 1, backgroundColor: '#3F3F46' }} />
+            <View style={{ height: 0.5, backgroundColor: colors.surface.border }} />
 
             <TouchableOpacity
               style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 14 }}
               onPress={() => { setMenuVisible(false); handleLeaveGroup(); }}
               activeOpacity={0.7}
             >
-              <Ionicons name="exit-outline" size={18} color="#EF4444" />
-              <Text style={{ color: '#EF4444', fontSize: 15 }}>Sair do grupo</Text>
+              <Ionicons name="exit-outline" size={18} color={colors.status.error} />
+              <Text style={{ color: colors.status.error, fontSize: 15 }}>Sair do grupo</Text>
             </TouchableOpacity>
 
             {isAdmin && (
               <>
-                <View style={{ height: 1, backgroundColor: '#3F3F46' }} />
+                <View style={{ height: 0.5, backgroundColor: colors.surface.border }} />
                 <TouchableOpacity
                   style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 14 }}
                   onPress={() => { setMenuVisible(false); handleDelete(); }}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name="trash-outline" size={18} color="#EF4444" />
-                  <Text style={{ color: '#EF4444', fontSize: 15 }}>Deletar grupo</Text>
+                  <Ionicons name="trash-outline" size={18} color={colors.status.error} />
+                  <Text style={{ color: colors.status.error, fontSize: 15 }}>Deletar grupo</Text>
                 </TouchableOpacity>
               </>
             )}

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSessionStore } from '@store/session.store';
@@ -7,6 +7,9 @@ import { useSessionAchievements } from '@features/achievements/hooks/useSessionA
 import { useRunDetail } from '@features/history/hooks/useRunDetail';
 import { ShareRunCard } from '@features/history/components/ShareRunCard';
 import { useRunResultShare } from '@features/history/hooks/useRunResultShare';
+import { SectionLabel } from '@shared/components/SectionLabel';
+import { Button, ButtonStack } from '@shared/components/Button';
+import { colors } from '@constants/theme';
 import type { ShareRunCardInput } from '@features/history/utils/shareRunResult';
 
 function formatTime(ms: number): string {
@@ -29,6 +32,25 @@ const ACHIEVEMENT_ICONS: Record<string, string> = {
   ten_km_total: '🔟', fifty_km_total: '💯', three_weeks_streak: '🔥',
   podium: '🥇', fast_five: '⚡',
 };
+
+function RankRow({ rank, username, distanceKm }: { rank: number; username: string; distanceKm: string }) {
+  return (
+    <View className="flex-row items-center px-4 py-3 mb-2 bg-surface-card rounded-2xl">
+      <Text
+        className="text-text-disabled w-7 text-sm font-extrabold"
+        style={{ fontVariant: ['tabular-nums'] }}
+      >
+        {rank}
+      </Text>
+      <View className="flex-1 ml-1">
+        <Text className="text-text-primary font-semibold text-sm">{username}</Text>
+      </View>
+      <Text className="text-text-primary font-extrabold" style={{ fontVariant: ['tabular-nums'] }}>
+        {distanceKm}km
+      </Text>
+    </View>
+  );
+}
 
 export default function RunSummaryScreen() {
   const router = useRouter();
@@ -78,116 +100,123 @@ export default function RunSummaryScreen() {
     <View className="flex-1 bg-surface-bg">
       {shareRun ? <ShareRunCard ref={cardRef} run={shareRun} /> : null}
       <ScrollView className="flex-1 bg-surface-bg" contentContainerStyle={{ paddingBottom: 40 }}>
-      <View className="px-6 pt-16 pb-8 items-center">
-        <View className="w-20 h-20 rounded-full bg-brand-primary/20 border-2 border-brand-primary items-center justify-center mb-4">
-          <Ionicons name="flag" size={36} color="#F97316" />
-        </View>
-        <Text className="text-text-primary text-2xl font-bold">Corrida finalizada!</Text>
-        {groupName && (
-          <Text className="text-text-secondary text-sm mt-1">{groupName}</Text>
-        )}
-      </View>
-
-      <View className="mx-4 mb-6">
-        <View className="flex-row gap-3 mb-3">
-          <View className="flex-1 bg-surface-card border border-surface-border rounded-xl p-4 items-center">
-            <Text className="text-brand-primary text-2xl font-bold">
-              {(distanceM / 1000).toFixed(2)}km
-            </Text>
-            <Text className="text-text-secondary text-xs mt-1">Distância</Text>
+        {/* Celebration header */}
+        <View className="px-6 pt-20 pb-6 items-center">
+          <View className="w-16 h-16 rounded-full bg-brand-primary items-center justify-center mb-5">
+            <Ionicons name="flag" size={26} color="#fff" />
           </View>
-          <View className="flex-1 bg-surface-card border border-surface-border rounded-xl p-4 items-center">
-            <Text className="text-text-primary text-2xl font-bold">{formatTime(elapsedMs)}</Text>
-            <Text className="text-text-secondary text-xs mt-1">Tempo</Text>
-          </View>
-        </View>
-        <View className="bg-surface-card border border-surface-border rounded-xl p-4 items-center">
-          <Text className="text-text-primary text-2xl font-bold">{formatPace(paceSKm)}</Text>
-          <Text className="text-text-secondary text-xs mt-1">Pace médio</Text>
-        </View>
-      </View>
-
-      {(finalRanking.length > 0 || ranking.length > 0) && (
-        <View className="mx-4 mb-6">
-          <Text className="text-text-secondary text-xs font-semibold uppercase tracking-wider mb-3">
-            Resultado final
+          <Text className="text-text-primary text-[26px] font-extrabold tracking-tight">
+            Corrida finalizada!
           </Text>
-          {finalRanking.length > 0
-            ? finalRanking.map((entry) => (
-                <View
-                  key={entry.userId}
-                  className="flex-row items-center px-4 py-3 mb-2 bg-surface-card border border-surface-border rounded-xl"
-                >
-                  <Text className="text-text-secondary w-6 text-sm font-bold">#{entry.finalRank}</Text>
-                  <View className="flex-1 ml-3">
-                    <Text className="text-text-primary font-semibold text-sm">{entry.username}</Text>
-                  </View>
-                  <Text className="text-text-primary font-bold">
-                    {(entry.totalDistanceM / 1000).toFixed(2)}km
-                  </Text>
-                </View>
-              ))
-            : ranking.map((entry) => (
-                <View
-                  key={entry.userId}
-                  className="flex-row items-center px-4 py-3 mb-2 bg-surface-card border border-surface-border rounded-xl"
-                >
-                  <Text className="text-text-secondary w-6 text-sm font-bold">#{entry.rank}</Text>
-                  <View className="flex-1 ml-3">
-                    <Text className="text-text-primary font-semibold text-sm">{entry.username}</Text>
-                  </View>
-                  <Text className="text-text-primary font-bold">
-                    {(entry.distanceM / 1000).toFixed(2)}km
-                  </Text>
-                </View>
-              ))}
+          {groupName && <Text className="text-text-secondary text-sm mt-1">{groupName}</Text>}
         </View>
-      )}
 
-      {achievements && achievements.length > 0 && (
-        <View className="mx-4 mb-6">
-          <Text className="text-text-secondary text-xs font-semibold uppercase tracking-wider mb-3">
-            Conquistas desbloqueadas
-          </Text>
-          {achievements.map((a) => (
-            <View
-              key={a.id}
-              className="flex-row items-center bg-surface-card border border-brand-primary/30 rounded-xl px-4 py-3 mb-2 gap-3"
-            >
-              <Text className="text-2xl">{ACHIEVEMENT_ICONS[a.slug] ?? '🏅'}</Text>
-              <View className="flex-1">
-                <Text className="text-text-primary font-semibold text-sm">{a.name}</Text>
-                <Text className="text-text-secondary text-xs">{a.description}</Text>
-              </View>
-            </View>
-          ))}
-        </View>
-      )}
-
-      <View className="mx-4 gap-3">
-        {shareRun ? (
-          <TouchableOpacity
-            className={`w-full rounded-xl py-4 items-center justify-center flex-row gap-2 border ${
-              isSharing ? 'bg-surface-elevated border-surface-border' : 'bg-surface-card border-brand-primary/40'
-            }`}
-            onPress={shareRunResult}
-            disabled={isSharing}
-            activeOpacity={0.85}
+        {/* Hero metric */}
+        <View className="items-center pb-2">
+          <Text
+            className="text-text-primary font-extrabold"
+            style={{ fontSize: 60, lineHeight: 64, letterSpacing: -2, fontVariant: ['tabular-nums'] }}
           >
-            <Ionicons name="share-social" size={20} color={isSharing ? '#A1A1AA' : '#F97316'} />
-            <Text className={`font-bold ${isSharing ? 'text-text-secondary' : 'text-brand-primary'}`}>
-              {isSharing ? 'Preparando imagem...' : 'Compartilhar resultado'}
+            {(distanceM / 1000).toFixed(2)}
+          </Text>
+          <Text
+            className="text-text-secondary text-[11px] font-semibold uppercase"
+            style={{ letterSpacing: 2 }}
+          >
+            Quilômetros
+          </Text>
+        </View>
+
+        {/* Secondary metrics */}
+        <View className="flex-row justify-center gap-12 pt-5 pb-8">
+          <View className="items-center">
+            <Text
+              className="text-text-primary text-xl font-extrabold"
+              style={{ fontVariant: ['tabular-nums'] }}
+            >
+              {formatTime(elapsedMs)}
             </Text>
-          </TouchableOpacity>
-        ) : null}
-        <TouchableOpacity
-          className="w-full bg-brand-primary rounded-xl py-4 items-center"
-          onPress={() => { clearSession(); router.replace('/(tabs)/home'); }}
-          activeOpacity={0.85}
-        >
-          <Text className="text-white font-bold">Ir para o início</Text>
-        </TouchableOpacity>
-      </View>
+            <Text
+              className="text-text-secondary text-[10px] font-semibold uppercase mt-1"
+              style={{ letterSpacing: 1 }}
+            >
+              Tempo
+            </Text>
+          </View>
+          <View className="items-center">
+            <Text
+              className="text-text-primary text-xl font-extrabold"
+              style={{ fontVariant: ['tabular-nums'] }}
+            >
+              {formatPace(paceSKm)}
+            </Text>
+            <Text
+              className="text-text-secondary text-[10px] font-semibold uppercase mt-1"
+              style={{ letterSpacing: 1 }}
+            >
+              Pace médio
+            </Text>
+          </View>
+        </View>
+
+        {(finalRanking.length > 0 || ranking.length > 0) && (
+          <View className="mx-5 mb-7">
+            <SectionLabel label="Resultado final" />
+            {finalRanking.length > 0
+              ? finalRanking.map((entry) => (
+                  <RankRow
+                    key={entry.userId}
+                    rank={entry.finalRank}
+                    username={entry.username}
+                    distanceKm={(entry.totalDistanceM / 1000).toFixed(2)}
+                  />
+                ))
+              : ranking.map((entry) => (
+                  <RankRow
+                    key={entry.userId}
+                    rank={entry.rank}
+                    username={entry.username}
+                    distanceKm={(entry.distanceM / 1000).toFixed(2)}
+                  />
+                ))}
+          </View>
+        )}
+
+        {achievements && achievements.length > 0 && (
+          <View className="mx-5 mb-7">
+            <SectionLabel label="Conquistas desbloqueadas" />
+            {achievements.map((a) => (
+              <View
+                key={a.id}
+                className="flex-row items-center bg-surface-card rounded-2xl px-4 py-3.5 mb-2 gap-3"
+              >
+                <Text className="text-2xl">{ACHIEVEMENT_ICONS[a.slug] ?? '🏅'}</Text>
+                <View className="flex-1">
+                  <Text className="text-text-primary font-semibold text-sm">{a.name}</Text>
+                  <Text className="text-text-secondary text-xs mt-0.5">{a.description}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
+        <View className="mx-5">
+          <ButtonStack>
+            {shareRun ? (
+              <Button
+                label={isSharing ? 'Preparando imagem...' : 'Compartilhar resultado'}
+                icon="share-social"
+                variant="secondary"
+                onPress={shareRunResult}
+                disabled={isSharing}
+              />
+            ) : null}
+            <Button
+              label="Ir para o início"
+              onPress={() => { clearSession(); router.replace('/(tabs)/home'); }}
+            />
+          </ButtonStack>
+        </View>
       </ScrollView>
     </View>
   );

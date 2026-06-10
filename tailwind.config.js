@@ -6,29 +6,24 @@ module.exports = {
     extend: {
       colors: {
         brand: {
-          primary: '#F97316',   // orange — ação primária / CTA
-          secondary: '#22D3EE', // cyan claro — destaque secundário
-          green: '#22C55E',     // ativo / corridas / sucesso
-          cyan: '#06B6D4',      // informação / distância
-          purple: '#A855F7',    // conquistas
-          amber: '#F59E0B',     // pace / tempo
+          primary: '#FF5A1F', // laranja — único acento da interface (CTA, ações, "você")
         },
         surface: {
-          bg: '#09090B',        // fundo principal
-          card: '#18181B',      // cartões
-          elevated: '#27272A',  // modais, sheets
-          border: '#3F3F46',    // divisórias
+          bg: '#0A0A0C',       // fundo principal
+          card: '#141417',     // cartões — profundidade por tom, sem borda
+          elevated: '#1E1E23', // modais, sheets, chips
+          border: '#26262C',   // hairlines (inputs, divisórias)
         },
         text: {
-          primary: '#FAFAFA',
-          secondary: '#A1A1AA',
-          disabled: '#52525B',
+          primary: '#F7F7F8',
+          secondary: '#9C9CA6',
+          disabled: '#5B5B66',
         },
         status: {
-          success: '#22C55E',
-          warning: '#F59E0B',
-          error: '#EF4444',
-          info: '#3B82F6',
+          success: '#34D399', // "ao vivo" — único verde permitido
+          warning: '#FBBF24',
+          error: '#F0413E',
+          info: '#60A5FA',
         },
       },
       fontFamily: {

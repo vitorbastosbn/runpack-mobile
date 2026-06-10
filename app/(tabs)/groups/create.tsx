@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { useCreateGroup } from '@features/groups/hooks/useGroups';
+import { ScreenHeader } from '@shared/components/ScreenHeader';
+import { Button } from '@shared/components/Button';
+import { colors } from '@constants/theme';
 
 export default function CreateGroupScreen() {
   const router = useRouter();
@@ -33,59 +35,51 @@ export default function CreateGroupScreen() {
       className="flex-1 bg-surface-bg"
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View className="px-4 pt-14 pb-4 flex-row items-center gap-3">
-        <TouchableOpacity onPress={() => router.back()} hitSlop={8}>
-          <Ionicons name="arrow-back" size={24} color="#FAFAFA" />
-        </TouchableOpacity>
-        <Text className="text-text-primary text-2xl font-bold">Novo Grupo</Text>
-      </View>
+      <ScreenHeader title="Novo grupo" onBack={() => router.back()} />
 
-      <View className="px-4 gap-4">
+      <View className="px-5 gap-5 mt-2">
         <View>
-          <Text className="text-text-secondary text-xs font-semibold uppercase tracking-wider mb-2">Nome *</Text>
+          <Text
+            className="text-text-secondary text-[11px] font-semibold uppercase mb-2"
+            style={{ letterSpacing: 1.4 }}
+          >
+            Nome *
+          </Text>
           <TextInput
-            className="bg-surface-card border border-surface-border rounded-xl px-4 py-3 text-text-primary text-base"
+            className="bg-surface-card rounded-2xl px-4 py-3.5 text-text-primary text-base"
             placeholder="Nome do grupo"
-            placeholderTextColor="#52525B"
+            placeholderTextColor={colors.text.disabled}
             value={name}
             onChangeText={setName}
             maxLength={50}
           />
-          <Text className="text-text-disabled text-xs mt-1 text-right">{name.length}/50</Text>
+          <Text className="text-text-disabled text-xs mt-1.5 text-right">{name.length}/50</Text>
         </View>
 
         <View>
-          <Text className="text-text-secondary text-xs font-semibold uppercase tracking-wider mb-2">Descrição</Text>
+          <Text
+            className="text-text-secondary text-[11px] font-semibold uppercase mb-2"
+            style={{ letterSpacing: 1.4 }}
+          >
+            Descrição
+          </Text>
           <TextInput
-            className="bg-surface-card border border-surface-border rounded-xl px-4 py-3 text-text-primary text-base"
+            className="bg-surface-card rounded-2xl px-4 py-3.5 text-text-primary text-base"
             placeholder="Opcional"
-            placeholderTextColor="#52525B"
+            placeholderTextColor={colors.text.disabled}
             value={description}
             onChangeText={setDescription}
             maxLength={200}
             multiline
             numberOfLines={3}
-            style={{ textAlignVertical: 'top', minHeight: 80 }}
+            style={{ textAlignVertical: 'top', minHeight: 88 }}
           />
-          <Text className="text-text-disabled text-xs mt-1 text-right">{description.length}/200</Text>
+          <Text className="text-text-disabled text-xs mt-1.5 text-right">{description.length}/200</Text>
         </View>
 
-        {error && (
-          <Text className="text-status-error text-sm">{error}</Text>
-        )}
+        {error && <Text className="text-status-error text-sm">{error}</Text>}
 
-        <TouchableOpacity
-          className="w-full bg-brand-primary rounded-xl py-4 items-center mt-2"
-          onPress={handleCreate}
-          disabled={createGroup.isPending}
-          activeOpacity={0.85}
-        >
-          {createGroup.isPending ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text className="text-white font-bold text-base">Criar Grupo</Text>
-          )}
-        </TouchableOpacity>
+        <Button label="Criar grupo" onPress={handleCreate} loading={createGroup.isPending} />
       </View>
     </KeyboardAvoidingView>
   );

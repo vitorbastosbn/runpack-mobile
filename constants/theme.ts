@@ -1,24 +1,23 @@
 export const colors = {
   brand: {
-    primary: '#F97316',
-    secondary: '#22D3EE',
+    primary: '#FF5A1F',
   },
   surface: {
-    bg: '#09090B',
-    card: '#18181B',
-    elevated: '#27272A',
-    border: '#3F3F46',
+    bg: '#0A0A0C',
+    card: '#141417',
+    elevated: '#1E1E23',
+    border: '#26262C',
   },
   text: {
-    primary: '#FAFAFA',
-    secondary: '#A1A1AA',
-    disabled: '#52525B',
+    primary: '#F7F7F8',
+    secondary: '#9C9CA6',
+    disabled: '#5B5B66',
   },
   status: {
-    success: '#22C55E',
-    warning: '#F59E0B',
-    error: '#EF4444',
-    info: '#3B82F6',
+    success: '#34D399',
+    warning: '#FBBF24',
+    error: '#F0413E',
+    info: '#60A5FA',
   },
 } as const;
 
@@ -32,8 +31,14 @@ export const spacing = {
 } as const;
 
 export const radius = {
-  sm: 6,
-  md: 12,
-  lg: 16,
+  sm: 8,
+  md: 14,
+  lg: 20,
   full: 9999,
 } as const;
+
+/** Números grandes (tempo, distância, pace) — identidade visual do app. */
+export const numeric = {
+  fontWeight: '800' as const,
+  fontVariant: ['tabular-nums'] as const,
+};

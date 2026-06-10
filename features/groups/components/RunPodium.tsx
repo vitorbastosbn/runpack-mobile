@@ -4,13 +4,13 @@ import { formatDistance } from '@shared/utils/format';
 import type { PodiumEntry } from '../types';
 
 const RANK_COLOR: Record<number, { bg: string; fg: string }> = {
-  1: { bg: '#FBBF24', fg: '#000' },
-  2: { bg: '#9CA3AF', fg: '#000' },
-  3: { bg: '#B45309', fg: '#FFF' },
+  1: { bg: '#F5C518', fg: '#000' },
+  2: { bg: '#A8A8B0', fg: '#000' },
+  3: { bg: '#B4683C', fg: '#FFF' },
 };
 
 function PodiumRow({ entry }: { entry: PodiumEntry }) {
-  const c = RANK_COLOR[entry.finalRank] ?? { bg: '#52525B', fg: '#FFF' };
+  const c = RANK_COLOR[entry.finalRank] ?? { bg: '#3A3A42', fg: '#FFF' };
   return (
     <View className="flex-row items-center py-1.5">
       <View
@@ -25,7 +25,10 @@ function PodiumRow({ entry }: { entry: PodiumEntry }) {
       <Text className="text-text-primary text-sm ml-3 flex-1" numberOfLines={1}>
         {entry.username}
       </Text>
-      <Text className="text-text-primary text-sm font-bold">
+      <Text
+        className="text-text-primary text-sm font-extrabold"
+        style={{ fontVariant: ['tabular-nums'] }}
+      >
         {formatDistance(entry.totalDistanceM)}
       </Text>
     </View>

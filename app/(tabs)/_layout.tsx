@@ -1,10 +1,17 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { colors } from '@constants/theme';
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
 function TabIcon({ name, focused }: { name: IoniconsName; focused: boolean }) {
-  return <Ionicons name={focused ? name : (`${name}-outline` as IoniconsName)} size={24} color={focused ? '#F97316' : '#71717A'} />;
+  return (
+    <Ionicons
+      name={focused ? name : (`${name}-outline` as IoniconsName)}
+      size={23}
+      color={focused ? colors.brand.primary : colors.text.disabled}
+    />
+  );
 }
 
 export default function TabsLayout() {
@@ -12,16 +19,22 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarStyle: { backgroundColor: '#18181B', borderTopColor: '#3F3F46' },
-        tabBarActiveTintColor: '#F97316',
-        tabBarInactiveTintColor: '#71717A',
-        tabBarLabelStyle: { fontSize: 11 },
+        tabBarStyle: {
+          backgroundColor: colors.surface.bg,
+          borderTopColor: colors.surface.border,
+          borderTopWidth: 0.5,
+          height: 62,
+          paddingTop: 6,
+        },
+        tabBarActiveTintColor: colors.brand.primary,
+        tabBarInactiveTintColor: colors.text.disabled,
+        tabBarLabelStyle: { fontSize: 10, fontWeight: '600' },
       }}
     >
       <Tabs.Screen
         name="home"
         options={{
-          title: 'Home',
+          title: 'Início',
           tabBarIcon: ({ focused }) => <TabIcon name="home" focused={focused} />,
         }}
       />

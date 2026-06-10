@@ -1,13 +1,15 @@
-import { View, Text, TextInput, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { useGroupsInfinite, useGroupMembers } from '@features/groups/hooks/useGroups';
 import { MemberAvatarStack } from '@shared/components/MemberAvatarStack';
+import { SearchBar } from '@shared/components/SearchBar';
+import { EmptyState } from '@shared/components/EmptyState';
+import { Fab } from '@shared/components/Fab';
 import { useDebounce } from '@shared/hooks/useDebounce';
+import { colors } from '@constants/theme';
 import type { Group } from '@features/groups/types';
 import { useCallback, useState } from 'react';
 
-const SURFACE_CARD = '#18181B';
 const MAX_VISIBLE_AVATARS = 6;
 
 function GroupListCard({ group, onPress }: { group: Group; onPress: () => void }) {
@@ -17,43 +19,40 @@ function GroupListCard({ group, onPress }: { group: Group; onPress: () => void }
 
   return (
     <TouchableOpacity
-      className="bg-surface-card border border-surface-border rounded-2xl p-4 mb-3"
+      className="bg-surface-card rounded-[20px] p-5 mb-2.5"
       onPress={onPress}
       activeOpacity={0.85}
       accessibilityRole="button"
       accessibilityLabel={`Grupo ${group.name}, ${group.memberCount} membros`}
     >
-      {/* Title + admin star */}
       <View className="flex-row items-center gap-2">
         <Text className="text-text-primary font-bold text-base flex-1" numberOfLines={1}>
           {group.name}
         </Text>
         {group.myRole === 'admin' && (
-          <Ionicons name="star" size={16} color="#F97316" />
+          <View className="px-2 py-0.5 rounded-full bg-surface-elevated">
+            <Text
+              className="text-brand-primary text-[10px] font-bold uppercase"
+              style={{ letterSpacing: 0.5 }}
+            >
+              Admin
+            </Text>
+          </View>
         )}
       </View>
 
       {group.description ? (
-        <Text className="text-text-secondary text-sm mt-1">
+        <Text className="text-text-secondary text-[13px] leading-5 mt-1" numberOfLines={2}>
           {group.description}
         </Text>
       ) : null}
 
-      {/* Admin info */}
-      {adminMember && (
-        <View className="flex-row items-center gap-1.5 mt-2 bg-surface-elevated rounded-full px-2.5 py-1" style={{ alignSelf: 'flex-start' }}>
-          <Ionicons name="shield-checkmark" size={11} color="#F97316" />
-          <Text className="text-text-secondary text-xs font-medium">{adminMember.name}</Text>
-        </View>
-      )}
-
-      {/* Footer: avatars + status */}
-      <View className="flex-row items-center justify-between mt-4 pt-4 border-t border-surface-border">
+      <View className="flex-row items-center justify-between mt-4">
         {members.length > 0 ? (
           <MemberAvatarStack
             members={members}
             totalCount={group.memberCount}
-            borderColor={SURFACE_CARD}
+            borderColor={colors.surface.card}
             size={26}
           />
         ) : (
@@ -61,13 +60,19 @@ function GroupListCard({ group, onPress }: { group: Group; onPress: () => void }
         )}
 
         {group.activeSessionId ? (
-          <View className="flex-row items-center gap-1.5 bg-brand-green/15 border border-brand-green/40 rounded-full px-2.5 py-1">
-            <View className="w-1.5 h-1.5 rounded-full bg-brand-green" />
-            <Text className="text-brand-green text-xs font-semibold">Em corrida</Text>
+          <View className="flex-row items-center gap-1.5">
+            <View className="w-1.5 h-1.5 rounded-full bg-status-success" />
+            <Text
+              className="text-status-success text-[10px] font-bold uppercase"
+              style={{ letterSpacing: 1 }}
+            >
+              Em corrida
+            </Text>
           </View>
         ) : (
           <Text className="text-text-secondary text-xs">
             {group.memberCount} {group.memberCount === 1 ? 'membro' : 'membros'}
+            {adminMember ? ` · ${adminMember.name}` : ''}
           </Text>
         )}
       </View>
@@ -92,63 +97,45 @@ export default function GroupsScreen() {
 
   return (
     <View className="flex-1 bg-surface-bg">
-      <View className="px-4 pt-14 pb-4">
-        <Text className="text-text-primary text-2xl font-bold mb-4">Grupos</Text>
-
-        <View className="flex-row items-center bg-surface-card border border-surface-border rounded-xl px-3 py-2">
-          <Ionicons name="search" size={18} color="#A1A1AA" />
-          <TextInput
-            className="flex-1 text-text-primary ml-2 text-sm"
-            placeholder="Buscar grupo pelo nome..."
-            placeholderTextColor="#A1A1AA"
-            value={query}
-            onChangeText={setQuery}
-            autoCorrect={false}
-          />
-          {query.length > 0 && (
-            <TouchableOpacity onPress={() => setQuery('')} hitSlop={8}>
-              <Ionicons name="close-circle" size={18} color="#A1A1AA" />
-            </TouchableOpacity>
-          )}
-        </View>
+      <View className="px-5 pt-14 pb-4">
+        <Text className="text-text-primary text-[28px] font-extrabold tracking-tight mb-4">Grupos</Text>
+        <SearchBar
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Buscar grupo pelo nome..."
+          autoCapitalize="sentences"
+        />
       </View>
 
       <FlatList
         data={groups}
         keyExtractor={(item) => item.id}
         renderItem={renderGroup}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
-        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor="#F97316" />}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 110 }}
+        refreshControl={
+          <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor={colors.brand.primary} />
+        }
         onEndReached={() => { if (hasNextPage) fetchNextPage(); }}
         onEndReachedThreshold={0.3}
         ListFooterComponent={
-          isFetchingNextPage ? <ActivityIndicator color="#F97316" style={{ marginVertical: 16 }} /> : null
+          isFetchingNextPage
+            ? <ActivityIndicator color={colors.brand.primary} style={{ marginVertical: 16 }} />
+            : null
         }
         ListEmptyComponent={
           isLoading ? (
-            <ActivityIndicator color="#F97316" style={{ marginTop: 32 }} />
+            <ActivityIndicator color={colors.brand.primary} style={{ marginTop: 32 }} />
           ) : (
-            <View className="items-center mt-16">
-              <Ionicons name="people-circle-outline" size={48} color="#3F3F46" />
-              <Text className="text-text-secondary mt-4 text-center">
-                {debouncedQuery.trim()
-                  ? 'Nenhum grupo encontrado.'
-                  : 'Nenhum grupo ainda.\nCrie um ou aguarde um convite.'}
-              </Text>
-            </View>
+            <EmptyState
+              icon="people-outline"
+              title={debouncedQuery.trim() ? 'Nenhum grupo encontrado' : 'Nenhum grupo ainda'}
+              subtitle={debouncedQuery.trim() ? undefined : 'Crie um ou aguarde um convite.'}
+            />
           )
         }
       />
 
-      {/* FAB — create group */}
-      <TouchableOpacity
-        style={{ position: 'absolute', bottom: 28, right: 20 }}
-        className="w-16 h-16 bg-brand-primary rounded-full items-center justify-center"
-        onPress={() => router.push('/(tabs)/groups/create')}
-        activeOpacity={0.85}
-      >
-        <Ionicons name="add" size={30} color="#fff" />
-      </TouchableOpacity>
+      <Fab icon="add" onPress={() => router.push('/(tabs)/groups/create')} accessibilityLabel="Criar grupo" />
     </View>
   );
 }

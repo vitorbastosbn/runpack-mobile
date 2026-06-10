@@ -1,9 +1,11 @@
 import { useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { useGroup, useGroupRuns } from '@features/groups/hooks/useGroups';
 import { Avatar } from '@shared/components/Avatar';
+import { ScreenHeader } from '@shared/components/ScreenHeader';
+import { EmptyState } from '@shared/components/EmptyState';
+import { colors } from '@constants/theme';
 import { formatDistance } from '@shared/utils/format';
 import type { GroupRunSummary } from '@features/groups/types';
 
@@ -23,7 +25,7 @@ export default function GroupRunsScreen() {
 
   const renderRun = useCallback(({ item }: { item: GroupRunSummary }) => (
     <TouchableOpacity
-      className="bg-surface-card border border-surface-border rounded-2xl p-4 mb-3"
+      className="bg-surface-card rounded-[20px] p-5 mb-2.5"
       onPress={() => router.push(`/(tabs)/groups/${id}/runs/${item.sessionId}`)}
       activeOpacity={0.85}
     >
@@ -31,7 +33,7 @@ export default function GroupRunsScreen() {
         <Text className="text-text-secondary text-xs">{formatDate(item.finishedAt)}</Text>
         <View className="flex-row items-center gap-2">
           {item.distanceGoalM ? (
-            <View className="bg-surface-elevated rounded-md px-2 py-0.5">
+            <View className="bg-surface-elevated rounded-full px-2.5 py-0.5">
               <Text className="text-text-secondary text-[11px] font-semibold">
                 Meta {formatDistance(item.distanceGoalM)}
               </Text>
@@ -46,7 +48,7 @@ export default function GroupRunsScreen() {
       {item.winnerUsername ? (
         <View className="flex-row items-center">
           <View
-            style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#FBBF24' }}
+            style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#F5C518' }}
             className="items-center justify-center"
           >
             <Text style={{ color: '#000', fontSize: 12, fontWeight: '800' }}>1</Text>
@@ -58,7 +60,10 @@ export default function GroupRunsScreen() {
             {item.winnerUsername}
           </Text>
           {item.winnerDistanceM != null && (
-            <Text className="text-text-primary text-sm font-bold">
+            <Text
+              className="text-text-primary text-sm font-extrabold"
+              style={{ fontVariant: ['tabular-nums'] }}
+            >
               {formatDistance(item.winnerDistanceM)}
             </Text>
           )}
@@ -71,35 +76,22 @@ export default function GroupRunsScreen() {
 
   return (
     <View className="flex-1 bg-surface-bg">
-      <View className="px-4 pt-14 pb-4 flex-row items-center gap-3">
-        <TouchableOpacity onPress={() => router.back()} hitSlop={8}>
-          <Ionicons name="arrow-back" size={24} color="#FAFAFA" />
-        </TouchableOpacity>
-        <View className="flex-1">
-          <Text className="text-text-primary text-xl font-bold" numberOfLines={1}>
-            Histórico de corridas
-          </Text>
-          {group?.name ? (
-            <Text className="text-text-secondary text-xs" numberOfLines={1}>{group.name}</Text>
-          ) : null}
-        </View>
-      </View>
+      <ScreenHeader
+        title="Histórico de corridas"
+        subtitle={group?.name}
+        onBack={() => router.back()}
+      />
 
       <FlatList
         data={runs}
         keyExtractor={(item) => item.sessionId}
         renderItem={renderRun}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }}
         ListEmptyComponent={
           isLoading ? (
-            <ActivityIndicator color="#F97316" style={{ marginTop: 32 }} />
+            <ActivityIndicator color={colors.brand.primary} style={{ marginTop: 32 }} />
           ) : (
-            <View className="items-center mt-16">
-              <Ionicons name="flag-outline" size={48} color="#3F3F46" />
-              <Text className="text-text-secondary mt-4 text-center">
-                Nenhuma corrida concluída ainda.
-              </Text>
-            </View>
+            <EmptyState icon="flag-outline" title="Nenhuma corrida concluída ainda" />
           )
         }
       />

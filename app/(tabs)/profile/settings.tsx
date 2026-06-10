@@ -4,13 +4,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLogout } from '@features/auth/hooks/useLogout';
 import { useDeleteAccount } from '@features/profile/hooks/useProfileActions';
 import { useNotificationPreferences } from '@features/notifications/hooks/useNotificationPreferences';
+import { ScreenHeader } from '@shared/components/ScreenHeader';
+import { colors } from '@constants/theme';
 import type { NotificationPreferences } from '@features/notifications/types';
 
 function SectionLabel({ label }: { label: string }) {
   return (
     <Text
-      className="text-text-disabled text-xs font-semibold uppercase mb-2 mt-8 mx-1"
-      style={{ letterSpacing: 1.2 }}
+      className="text-text-secondary text-[11px] font-semibold uppercase mb-3 mt-8 mx-1"
+      style={{ letterSpacing: 1.4 }}
     >
       {label}
     </Text>
@@ -32,8 +34,8 @@ function SettingsRow({
   destructive?: boolean;
   hideChevron?: boolean;
 }) {
-  const color = destructive ? '#EF4444' : '#FAFAFA';
-  const iconColor = destructive ? '#EF4444' : '#A1A1AA';
+  const color = destructive ? colors.status.error : colors.text.primary;
+  const iconColor = destructive ? colors.status.error : colors.text.secondary;
 
   return (
     <TouchableOpacity
@@ -43,12 +45,12 @@ function SettingsRow({
       accessibilityRole="button"
       accessibilityLabel={label}
     >
-      <Ionicons name={icon as any} size={20} color={iconColor} style={{ marginRight: 14 }} />
+      <Ionicons name={icon as any} size={19} color={iconColor} style={{ marginRight: 14 }} />
       <View className="flex-1">
         <Text style={{ color, fontSize: 15 }}>{label}</Text>
         {sublabel ? <Text className="text-text-disabled text-xs mt-0.5">{sublabel}</Text> : null}
       </View>
-      {!hideChevron && <Ionicons name="chevron-forward" size={16} color="#52525B" />}
+      {!hideChevron && <Ionicons name="chevron-forward" size={15} color={colors.text.disabled} />}
     </TouchableOpacity>
   );
 }
@@ -66,13 +68,13 @@ function NotifToggleRow({
 }) {
   return (
     <View className="flex-row items-center px-4 py-3.5 bg-surface-card">
-      <Ionicons name={icon as any} size={20} color="#A1A1AA" style={{ marginRight: 14 }} />
+      <Ionicons name={icon as any} size={19} color={colors.text.secondary} style={{ marginRight: 14 }} />
       <Text className="flex-1 text-text-primary" style={{ fontSize: 15 }}>{label}</Text>
       <Switch
         value={value}
         onValueChange={onToggle}
-        trackColor={{ false: '#3F3F46', true: '#F97316' }}
-        thumbColor="#FAFAFA"
+        trackColor={{ false: colors.surface.elevated, true: colors.brand.primary }}
+        thumbColor="#F7F7F8"
       />
     </View>
   );
@@ -89,7 +91,7 @@ const NOTIF_ROWS: { key: keyof NotificationPreferences; icon: string; label: str
 ];
 
 function Divider() {
-  return <View style={{ height: 1, backgroundColor: '#3F3F46' }} />;
+  return <View style={{ height: 0.5, backgroundColor: colors.surface.border }} />;
 }
 
 export default function SettingsScreen() {
@@ -122,17 +124,12 @@ export default function SettingsScreen() {
 
   return (
     <View className="flex-1 bg-surface-bg">
-      <View className="flex-row items-center px-4 pt-14 pb-4">
-        <TouchableOpacity onPress={() => router.back()} className="p-1 mr-3" hitSlop={8}>
-          <Ionicons name="arrow-back" size={22} color="#FAFAFA" />
-        </TouchableOpacity>
-        <Text className="text-text-primary text-lg font-bold flex-1">Configurações</Text>
-      </View>
+      <ScreenHeader title="Configurações" onBack={() => router.back()} />
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
         {/* Notificações */}
         <SectionLabel label="Notificações" />
-        <View className="rounded-2xl overflow-hidden border border-surface-border">
+        <View className="rounded-[20px] overflow-hidden">
           {NOTIF_ROWS.map((row, idx) => (
             <View key={row.key}>
               {idx > 0 && <Divider />}
@@ -148,7 +145,7 @@ export default function SettingsScreen() {
 
         {/* Suporte */}
         <SectionLabel label="Suporte" />
-        <View className="rounded-2xl overflow-hidden border border-surface-border">
+        <View className="rounded-[20px] overflow-hidden">
           <SettingsRow
             icon="mail-outline"
             label="Contato com suporte"
@@ -170,7 +167,7 @@ export default function SettingsScreen() {
 
         {/* Conta */}
         <SectionLabel label="Conta" />
-        <View className="rounded-2xl overflow-hidden border border-surface-border">
+        <View className="rounded-[20px] overflow-hidden">
           <SettingsRow
             icon="log-out-outline"
             label="Sair da conta"

@@ -7,6 +7,8 @@ type ShareRunCardProps = {
   run: ShareRunCardInput;
 };
 
+const ACCENT = '#FF5A1F';
+
 export const ShareRunCard = forwardRef<View, ShareRunCardProps>(function ShareRunCard({ run }, ref) {
   const model = buildShareRunCardModel(run);
 
@@ -20,32 +22,21 @@ export const ShareRunCard = forwardRef<View, ShareRunCardProps>(function ShareRu
         top: 0,
         width: 1080,
         height: 1350,
-        backgroundColor: '#111114',
+        backgroundColor: '#0A0A0C',
         overflow: 'hidden',
       }}
     >
+      {/* Single soft accent glow — top right */}
       <View
         style={{
           position: 'absolute',
-          width: 520,
-          height: 520,
-          borderRadius: 260,
-          backgroundColor: '#F97316',
-          opacity: 0.22,
-          right: -150,
-          top: -140,
-        }}
-      />
-      <View
-        style={{
-          position: 'absolute',
-          width: 420,
-          height: 420,
-          borderRadius: 210,
-          backgroundColor: '#22C55E',
-          opacity: 0.14,
-          left: -120,
-          bottom: 190,
+          width: 640,
+          height: 640,
+          borderRadius: 320,
+          backgroundColor: ACCENT,
+          opacity: 0.16,
+          right: -200,
+          top: -220,
         }}
       />
 
@@ -55,8 +46,8 @@ export const ShareRunCard = forwardRef<View, ShareRunCardProps>(function ShareRu
             style={{
               width: 74,
               height: 74,
-              borderRadius: 37,
-              backgroundColor: '#F97316',
+              borderRadius: 26,
+              backgroundColor: ACCENT,
               alignItems: 'center',
               justifyContent: 'center',
             }}
@@ -66,19 +57,20 @@ export const ShareRunCard = forwardRef<View, ShareRunCardProps>(function ShareRu
           <View style={{ flex: 1 }}>
             <Text style={{ color: '#FFFFFF', fontSize: 34, fontWeight: '900' }}>{model.title}</Text>
             {model.dateLabel ? (
-              <Text style={{ color: '#A1A1AA', fontSize: 24, marginTop: 6 }}>{model.dateLabel}</Text>
+              <Text style={{ color: '#9C9CA6', fontSize: 24, marginTop: 6 }}>{model.dateLabel}</Text>
             ) : null}
           </View>
         </View>
 
         <View style={{ marginTop: 86 }}>
-          <Text style={{ color: '#F97316', fontSize: 34, fontWeight: '800' }}>{model.runnerName}</Text>
+          <Text style={{ color: ACCENT, fontSize: 34, fontWeight: '800' }}>{model.runnerName}</Text>
           <Text
             style={{
               color: '#FFFFFF',
               fontSize: 72,
               lineHeight: 82,
               fontWeight: '900',
+              letterSpacing: -2,
               marginTop: 14,
             }}
           >
@@ -86,29 +78,25 @@ export const ShareRunCard = forwardRef<View, ShareRunCardProps>(function ShareRu
           </Text>
         </View>
 
-        <View
-          style={{
-            flexDirection: 'row',
-            gap: 22,
-            marginTop: 70,
-          }}
-        >
+        <View style={{ flexDirection: 'row', gap: 22, marginTop: 70 }}>
           <MetricCard label="Distância" value={model.distanceLabel} accent />
           <MetricCard label="Tempo" value={model.timeLabel} />
         </View>
-        <View
-          style={{
-            flexDirection: 'row',
-            gap: 22,
-            marginTop: 22,
-          }}
-        >
+        <View style={{ flexDirection: 'row', gap: 22, marginTop: 22 }}>
           <MetricCard label="Pace" value={model.paceLabel} />
-          <MetricCard label="Resultado" value={model.rankLabel} accent />
+          <MetricCard label="Resultado" value={model.rankLabel} />
         </View>
 
         <View style={{ marginTop: 74 }}>
-          <Text style={{ color: '#A1A1AA', fontSize: 25, fontWeight: '800', textTransform: 'uppercase' }}>
+          <Text
+            style={{
+              color: '#9C9CA6',
+              fontSize: 24,
+              fontWeight: '800',
+              textTransform: 'uppercase',
+              letterSpacing: 3,
+            }}
+          >
             Top 3 da corrida
           </Text>
           <View style={{ marginTop: 22, gap: 14 }}>
@@ -118,15 +106,13 @@ export const ShareRunCard = forwardRef<View, ShareRunCardProps>(function ShareRu
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  backgroundColor: '#24242A',
+                  backgroundColor: '#1A1A1E',
                   borderRadius: 26,
                   paddingHorizontal: 28,
                   paddingVertical: 22,
-                  borderWidth: 2,
-                  borderColor: '#34343C',
                 }}
               >
-                <Text style={{ color: '#F97316', fontSize: 28, fontWeight: '900', width: 74 }}>
+                <Text style={{ color: ACCENT, fontSize: 28, fontWeight: '900', width: 74 }}>
                   {participant.rankLabel}
                 </Text>
                 <Text style={{ color: '#FFFFFF', fontSize: 30, fontWeight: '800', flex: 1 }} numberOfLines={1}>
@@ -143,8 +129,8 @@ export const ShareRunCard = forwardRef<View, ShareRunCardProps>(function ShareRu
         <View style={{ flex: 1 }} />
         <View
           style={{
-            borderTopWidth: 2,
-            borderTopColor: '#2F2F36',
+            borderTopWidth: 1,
+            borderTopColor: '#26262C',
             paddingTop: 28,
             flexDirection: 'row',
             alignItems: 'center',
@@ -152,7 +138,7 @@ export const ShareRunCard = forwardRef<View, ShareRunCardProps>(function ShareRu
           }}
         >
           <Text style={{ color: '#FFFFFF', fontSize: 34, fontWeight: '900' }}>{model.footer}</Text>
-          <Text style={{ color: '#A1A1AA', fontSize: 24 }}>corra junto, dispute junto</Text>
+          <Text style={{ color: '#9C9CA6', fontSize: 24 }}>corra junto, dispute junto</Text>
         </View>
       </View>
     </View>
@@ -166,15 +152,23 @@ function MetricCard({ label, value, accent }: { label: string; value: string; ac
         flex: 1,
         minHeight: 154,
         borderRadius: 28,
-        backgroundColor: accent ? '#F97316' : '#24242A',
-        borderWidth: 2,
-        borderColor: accent ? '#FB923C' : '#34343C',
+        backgroundColor: accent ? ACCENT : '#1A1A1E',
         padding: 28,
         justifyContent: 'space-between',
       }}
     >
-      <Text style={{ color: accent ? '#FFF7ED' : '#A1A1AA', fontSize: 22, fontWeight: '800' }}>{label}</Text>
-      <Text style={{ color: '#FFFFFF', fontSize: 40, fontWeight: '900' }} numberOfLines={1}>
+      <Text
+        style={{
+          color: accent ? '#FFEDE3' : '#9C9CA6',
+          fontSize: 21,
+          fontWeight: '800',
+          textTransform: 'uppercase',
+          letterSpacing: 2,
+        }}
+      >
+        {label}
+      </Text>
+      <Text style={{ color: '#FFFFFF', fontSize: 42, fontWeight: '900' }} numberOfLines={1}>
         {value}
       </Text>
     </View>

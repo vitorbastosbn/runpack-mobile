@@ -35,7 +35,7 @@ export function MemberAvatarStack({
             marginLeft: i > 0 ? overlap : 0,
             zIndex: members.length - i,
             overflow: 'hidden',
-            backgroundColor: 'rgba(255,255,255,0.2)',
+            backgroundColor: '#2A2A31',
           }}
         >
           {member.avatarUrl ? (
@@ -46,7 +46,7 @@ export function MemberAvatarStack({
                 width: size,
                 height: size,
                 borderRadius: radius,
-                backgroundColor: 'rgba(255,255,255,0.3)',
+                backgroundColor: '#2A2A31',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
@@ -64,7 +64,7 @@ export function MemberAvatarStack({
             width: size,
             height: size,
             borderRadius: radius,
-            backgroundColor: 'rgba(0,0,0,0.35)',
+            backgroundColor: '#1E1E23',
             borderWidth: 1.5,
             borderColor,
             marginLeft: overlap,

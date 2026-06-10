@@ -28,23 +28,21 @@ function formatDistance(m: number): string {
   return (m / 1000).toFixed(2) + 'km';
 }
 
-function splitDistance(m: number): { value: string; unit: string } {
-  return { value: (m / 1000).toFixed(2), unit: 'km' };
-}
-
 function GoalProgressBar({ distanceM, goalM }: { distanceM: number; goalM: number }) {
   const pct = Math.min(1, goalM > 0 ? distanceM / goalM : 0);
   return (
-    <View className="mx-4 mb-4">
-      <View className="flex-row justify-between mb-1">
-        <Text className="text-text-secondary text-xs">Meta: {formatDistance(goalM)}</Text>
-        <Text className="text-text-secondary text-xs">{Math.round(pct * 100)}%</Text>
+    <View className="mx-5 mb-6">
+      <View className="h-1 bg-surface-elevated rounded-full overflow-hidden">
+        <View className="h-full bg-brand-primary rounded-full" style={{ width: `${pct * 100}%` }} />
       </View>
-      <View className="h-2 bg-surface-card rounded-full overflow-hidden border border-surface-border">
-        <View
-          className="h-full bg-brand-primary rounded-full"
-          style={{ width: `${pct * 100}%` }}
-        />
+      <View className="flex-row justify-between mt-2">
+        <Text className="text-text-secondary text-xs">Meta {formatDistance(goalM)}</Text>
+        <Text
+          className="text-text-secondary text-xs font-semibold"
+          style={{ fontVariant: ['tabular-nums'] }}
+        >
+          {Math.round(pct * 100)}%
+        </Text>
       </View>
     </View>
   );
@@ -63,7 +61,6 @@ export default function LiveSessionScreen() {
   const distanceGoalM = useSessionStore((s) => s.distanceGoalM);
   const goalCompleted = useSessionStore((s) => s.goalCompleted);
   const userId = useAuthStore((s) => s.user?.id);
-  const distance = splitDistance(distanceM);
 
   // 1s local tick for smooth timer — independent of 5s telemetry interval
   const [liveElapsedMs, setLiveElapsedMs] = useState(0);
@@ -116,21 +113,31 @@ export default function LiveSessionScreen() {
     const isMe = item.userId === userId;
     return (
       <View
-        className={`flex-row items-center px-4 py-3 mb-2 rounded-xl border ${
-          isMe ? 'bg-brand-primary/10 border-brand-primary/40' : 'bg-surface-card border-surface-border'
+        className={`flex-row items-center px-4 py-3 mb-2 rounded-2xl ${
+          isMe ? 'bg-surface-elevated' : 'bg-surface-card'
         }`}
       >
-        <Text className="text-text-secondary w-6 text-sm font-bold">#{item.rank}</Text>
-        <View className="mx-3">
-          <Avatar name={item.username} avatarUrl={item.avatarUrl} size={36} />
+        <Text
+          className={`w-7 text-sm font-extrabold ${isMe ? 'text-brand-primary' : 'text-text-disabled'}`}
+          style={{ fontVariant: ['tabular-nums'] }}
+        >
+          {item.rank}
+        </Text>
+        <View className="mr-3">
+          <Avatar name={item.username} avatarUrl={item.avatarUrl} size={34} />
         </View>
         <View className="flex-1">
           <Text className="text-text-primary font-semibold text-sm">
             {item.username}{isMe ? ' (você)' : ''}
           </Text>
-          <Text className="text-text-secondary text-xs">{formatPace(item.paceSKm)}</Text>
+          <Text className="text-text-secondary text-xs mt-0.5">{formatPace(item.paceSKm)}</Text>
         </View>
-        <Text className="text-text-primary font-bold">{formatDistance(item.distanceM)}</Text>
+        <Text
+          className="text-text-primary font-extrabold"
+          style={{ fontVariant: ['tabular-nums'] }}
+        >
+          {formatDistance(item.distanceM)}
+        </Text>
       </View>
     );
   }, [userId]);
@@ -160,7 +167,7 @@ export default function LiveSessionScreen() {
         </View>
       )}
 
-      {/* Goal completed overlay banner */}
+      {/* Goal completed banner */}
       {goalCompleted && (
         <View className="bg-brand-primary px-4 py-3 flex-row items-center justify-center gap-2">
           <Ionicons name="checkmark-circle" size={18} color="#fff" />
@@ -169,43 +176,70 @@ export default function LiveSessionScreen() {
       )}
 
       {/* Header */}
-      <View className="px-4 pt-14 pb-4">
-        <Text className="text-text-secondary text-xs uppercase tracking-wider">
-          {groupName ?? 'Corrida livre'}
-        </Text>
-        <Text className="text-text-primary text-lg font-bold">Corrida ao vivo</Text>
+      <View className="px-5 pt-14 pb-2 flex-row items-center justify-between">
+        <View>
+          <View className="flex-row items-center gap-1.5">
+            <View className="w-1.5 h-1.5 rounded-full bg-status-success" />
+            <Text
+              className="text-status-success text-[10px] font-bold uppercase"
+              style={{ letterSpacing: 1.4 }}
+            >
+              Ao vivo
+            </Text>
+          </View>
+          <Text className="text-text-primary text-lg font-extrabold tracking-tight mt-0.5">
+            {groupName ?? 'Corrida livre'}
+          </Text>
+        </View>
       </View>
 
-      {/* Personal metrics */}
-      <View className="flex-row px-4 mb-4 gap-3">
-        <View className="flex-1 h-28 bg-surface-card border border-surface-border rounded-xl px-3 py-4 items-center justify-center">
-          <Text className="text-brand-primary text-3xl font-bold">{formatTime(liveElapsedMs)}</Text>
-          <Text className="text-text-secondary text-xs mt-1">Tempo</Text>
-        </View>
-        <View className="flex-1 h-28 bg-surface-card border border-surface-border rounded-xl px-3 py-4 items-center justify-center">
-          <View className="flex-row items-end justify-center">
-            <Text
-              className="text-text-primary text-3xl font-bold"
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.75}
-            >
-              {distance.value}
-            </Text>
-            <Text className="text-text-primary text-xs font-bold ml-1 mb-1">{distance.unit}</Text>
-          </View>
-          <Text className="text-text-secondary text-xs mt-1">Distância</Text>
-        </View>
-        <View className="flex-1 h-28 bg-surface-card border border-surface-border rounded-xl px-3 py-4 items-center justify-center">
+      {/* Hero metric — distance */}
+      <View className="items-center pt-4 pb-2">
+        <Text
+          className="text-text-primary font-extrabold"
+          style={{ fontSize: 76, lineHeight: 80, letterSpacing: -3, fontVariant: ['tabular-nums'] }}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+        >
+          {(distanceM / 1000).toFixed(2)}
+        </Text>
+        <Text
+          className="text-text-secondary text-[11px] font-semibold uppercase -mt-1"
+          style={{ letterSpacing: 2 }}
+        >
+          Quilômetros
+        </Text>
+      </View>
+
+      {/* Secondary metrics */}
+      <View className="flex-row justify-center gap-12 pt-5 pb-6">
+        <View className="items-center">
           <Text
-            className="text-text-primary text-2xl font-bold"
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.75}
+            className="text-text-primary text-2xl font-extrabold"
+            style={{ fontVariant: ['tabular-nums'] }}
+          >
+            {formatTime(liveElapsedMs)}
+          </Text>
+          <Text
+            className="text-text-secondary text-[10px] font-semibold uppercase mt-1"
+            style={{ letterSpacing: 1 }}
+          >
+            Tempo
+          </Text>
+        </View>
+        <View className="items-center">
+          <Text
+            className="text-text-primary text-2xl font-extrabold"
+            style={{ fontVariant: ['tabular-nums'] }}
           >
             {formatPace(paceSKm)}
           </Text>
-          <Text className="text-text-secondary text-xs mt-1">Pace</Text>
+          <Text
+            className="text-text-secondary text-[10px] font-semibold uppercase mt-1"
+            style={{ letterSpacing: 1 }}
+          >
+            Pace
+          </Text>
         </View>
       </View>
 
@@ -215,14 +249,17 @@ export default function LiveSessionScreen() {
       )}
 
       {/* Ranking */}
-      <Text className="text-text-secondary text-xs font-semibold uppercase tracking-wider px-4 mb-2">
+      <Text
+        className="text-text-secondary text-[11px] font-semibold uppercase px-5 mb-3"
+        style={{ letterSpacing: 1.4 }}
+      >
         Ranking ao vivo
       </Text>
       <FlatList
         data={ranking}
         keyExtractor={(item) => item.userId}
         renderItem={renderRankEntry}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 16 }}
         ListEmptyComponent={
           <Text className="text-text-secondary text-sm text-center mt-4">
             Aguardando dados de corrida...
@@ -234,7 +271,7 @@ export default function LiveSessionScreen() {
       {toasts.length > 0 && (
         <View className="absolute top-28 left-0 right-0 items-center px-4">
           {toasts.slice(-1).map((msg, i) => (
-            <View key={i} className="bg-surface-card border border-surface-border rounded-xl px-4 py-2">
+            <View key={i} className="bg-surface-elevated rounded-full px-5 py-2.5">
               <Text className="text-text-primary text-sm">{msg}</Text>
             </View>
           ))}
@@ -242,13 +279,13 @@ export default function LiveSessionScreen() {
       )}
 
       {/* Bottom actions */}
-      <View className="px-4 pb-8 pt-4 border-t border-surface-border">
+      <View className="px-5 pb-8 pt-4">
         <TouchableOpacity
-          className="w-full bg-status-error rounded-xl py-4 items-center"
+          className="w-full bg-surface-card rounded-2xl py-4 items-center"
           onPress={handleEnd}
           activeOpacity={0.85}
         >
-          <Text className="text-white font-bold">
+          <Text className="text-status-error font-bold">
             {isCreator ? 'Encerrar corrida' : 'Sair da corrida'}
           </Text>
         </TouchableOpacity>

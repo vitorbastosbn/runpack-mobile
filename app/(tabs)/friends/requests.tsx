@@ -4,6 +4,9 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useFriendRequests, useSentRequests, useFriendActions } from '@features/friends/hooks/useFriends';
 import { Avatar } from '@shared/components/Avatar';
+import { ScreenHeader } from '@shared/components/ScreenHeader';
+import { EmptyState } from '@shared/components/EmptyState';
+import { colors } from '@constants/theme';
 import type { Friendship } from '@features/friends/types';
 
 type Tab = 'received' | 'sent';
@@ -22,44 +25,48 @@ export default function FriendRequestsScreen() {
   const { acceptRequest, rejectRequest } = useFriendActions();
 
   const renderReceived = useCallback(({ item }: { item: Friendship }) => (
-    <View className="flex-row items-center bg-surface-card border border-surface-border rounded-xl px-4 py-3 mb-2">
+    <View className="flex-row items-center bg-surface-card rounded-[20px] px-4 py-3 mb-2">
       <View className="mr-3">
         <Avatar name={item.user.name} avatarUrl={item.user.avatarUrl} />
       </View>
       <View className="flex-1">
-        <Text className="text-text-primary font-semibold">{item.user.name}</Text>
-        <Text className="text-text-secondary text-xs">{item.user.username}</Text>
+        <Text className="text-text-primary font-semibold text-[15px]">{item.user.name}</Text>
+        <Text className="text-text-secondary text-xs mt-0.5">{item.user.username}</Text>
       </View>
       <View className="flex-row gap-2">
         <TouchableOpacity
           onPress={() => rejectRequest.mutate(item.id)}
           disabled={rejectRequest.isPending || acceptRequest.isPending}
-          className="w-9 h-9 bg-surface-elevated rounded-lg items-center justify-center"
+          className="w-10 h-10 bg-surface-elevated rounded-full items-center justify-center"
+          accessibilityRole="button"
+          accessibilityLabel="Recusar solicitação"
         >
-          <Ionicons name="close" size={18} color="#EF4444" />
+          <Ionicons name="close" size={17} color={colors.text.secondary} />
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => acceptRequest.mutate(item.id)}
           disabled={acceptRequest.isPending || rejectRequest.isPending}
-          className="w-9 h-9 bg-brand-primary rounded-lg items-center justify-center"
+          className="w-10 h-10 bg-brand-primary rounded-full items-center justify-center"
+          accessibilityRole="button"
+          accessibilityLabel="Aceitar solicitação"
         >
-          <Ionicons name="checkmark" size={18} color="#fff" />
+          <Ionicons name="checkmark" size={17} color="#fff" />
         </TouchableOpacity>
       </View>
     </View>
   ), [acceptRequest, rejectRequest]);
 
   const renderSent = useCallback(({ item }: { item: Friendship }) => (
-    <View className="flex-row items-center bg-surface-card border border-surface-border rounded-xl px-4 py-3 mb-2">
+    <View className="flex-row items-center bg-surface-card rounded-[20px] px-4 py-3 mb-2">
       <View className="mr-3">
         <Avatar name={item.user.name} avatarUrl={item.user.avatarUrl} />
       </View>
       <View className="flex-1">
-        <Text className="text-text-primary font-semibold">{item.user.name}</Text>
-        <Text className="text-text-secondary text-xs">{item.user.username}</Text>
+        <Text className="text-text-primary font-semibold text-[15px]">{item.user.name}</Text>
+        <Text className="text-text-secondary text-xs mt-0.5">{item.user.username}</Text>
       </View>
-      <View className="px-3 py-1.5 rounded-lg bg-surface-elevated">
-        <Text className="text-xs text-text-secondary">Aguardando</Text>
+      <View className="px-3.5 py-2 rounded-full bg-surface-elevated">
+        <Text className="text-xs font-semibold text-text-secondary">Aguardando</Text>
       </View>
     </View>
   ), []);
@@ -74,23 +81,17 @@ export default function FriendRequestsScreen() {
 
   return (
     <View className="flex-1 bg-surface-bg">
-      {/* Header */}
-      <View className="px-4 pt-14 pb-4 flex-row items-center gap-3">
-        <TouchableOpacity onPress={() => router.back()} hitSlop={8}>
-          <Ionicons name="arrow-back" size={24} color="#FAFAFA" />
-        </TouchableOpacity>
-        <Text className="text-text-primary text-2xl font-bold">Solicitações</Text>
-      </View>
+      <ScreenHeader title="Solicitações" onBack={() => router.back()} />
 
       {/* Tabs */}
-      <View className="flex-row mx-4 mb-4 bg-surface-card border border-surface-border rounded-xl p-1">
+      <View className="flex-row mx-5 mb-4 bg-surface-card rounded-full p-1">
         {(['received', 'sent'] as Tab[]).map((tab) => (
           <TouchableOpacity
             key={tab}
             onPress={() => setActiveTab(tab)}
-            className={`flex-1 py-2 rounded-lg items-center ${activeTab === tab ? 'bg-brand-primary' : ''}`}
+            className={`flex-1 py-2 rounded-full items-center ${activeTab === tab ? 'bg-surface-elevated' : ''}`}
           >
-            <Text className={`text-sm font-semibold ${activeTab === tab ? 'text-white' : 'text-text-secondary'}`}>
+            <Text className={`text-[13px] font-semibold ${activeTab === tab ? 'text-text-primary' : 'text-text-secondary'}`}>
               {tab === 'received' ? `Recebidas${receivedCount > 0 ? ` (${receivedCount})` : ''}` : 'Enviadas'}
             </Text>
           </TouchableOpacity>
@@ -101,22 +102,19 @@ export default function FriendRequestsScreen() {
         data={data}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }}
         onEndReached={() => { if (isReceived && hasNextPage) fetchNextPage(); }}
         onEndReachedThreshold={0.3}
         ListFooterComponent={
           isReceived && isFetchingNextPage ? (
-            <ActivityIndicator color="#F97316" style={{ marginVertical: 16 }} />
+            <ActivityIndicator color={colors.brand.primary} style={{ marginVertical: 16 }} />
           ) : null
         }
         ListEmptyComponent={
           isLoading ? (
-            <ActivityIndicator color="#F97316" style={{ marginTop: 32 }} />
+            <ActivityIndicator color={colors.brand.primary} style={{ marginTop: 32 }} />
           ) : (
-            <View className="items-center mt-16">
-              <Ionicons name="mail-open-outline" size={48} color="#3F3F46" />
-              <Text className="text-text-secondary mt-4">{emptyLabel}</Text>
-            </View>
+            <EmptyState icon="mail-open-outline" title={emptyLabel} />
           )
         }
       />

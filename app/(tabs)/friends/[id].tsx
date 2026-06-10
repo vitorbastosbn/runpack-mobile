@@ -5,6 +5,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useUserProfile } from '@features/profile/hooks/useUserProfile';
 import { useUserAchievements } from '@features/achievements/hooks/useUserAchievements';
 import { useFriendActions } from '@features/friends/hooks/useFriends';
+import { ScreenHeader } from '@shared/components/ScreenHeader';
+import { SectionLabel } from '@shared/components/SectionLabel';
+import { EmptyState } from '@shared/components/EmptyState';
+import { Button, ButtonStack } from '@shared/components/Button';
+import { colors } from '@constants/theme';
 import { formatDistance, formatPace } from '@shared/utils/format';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -18,6 +23,27 @@ const ACHIEVEMENT_ICONS: Record<string, string> = {
   podium: 'trophy',
   fast_five: 'flash',
 };
+
+function Stat({ label, value }: { label: string; value: string | number }) {
+  return (
+    <View className="flex-1 bg-surface-card rounded-[20px] px-3 py-4 items-center">
+      <Text
+        className="text-text-primary text-xl font-extrabold"
+        style={{ fontVariant: ['tabular-nums'] }}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+      >
+        {value}
+      </Text>
+      <Text
+        className="text-text-secondary text-[10px] font-semibold uppercase mt-1"
+        style={{ letterSpacing: 1 }}
+      >
+        {label}
+      </Text>
+    </View>
+  );
+}
 
 export default function FriendProfileScreen() {
   const router = useRouter();
@@ -55,7 +81,7 @@ export default function FriendProfileScreen() {
   if (isLoading) {
     return (
       <View className="flex-1 bg-surface-bg items-center justify-center">
-        <ActivityIndicator color="#F97316" />
+        <ActivityIndicator color={colors.brand.primary} />
       </View>
     );
   }
@@ -63,10 +89,8 @@ export default function FriendProfileScreen() {
   if (isError || !profile) {
     return (
       <View className="flex-1 bg-surface-bg items-center justify-center px-8">
-        <Text className="text-text-primary text-base text-center mb-4">Perfil não disponível</Text>
-        <TouchableOpacity className="bg-brand-primary px-6 py-3 rounded-xl" onPress={() => refetch()}>
-          <Text className="text-white font-semibold">Tentar novamente</Text>
-        </TouchableOpacity>
+        <Text className="text-text-primary text-base text-center mb-6">Perfil não disponível</Text>
+        <Button label="Tentar novamente" onPress={() => refetch()} />
       </View>
     );
   }
@@ -85,75 +109,54 @@ export default function FriendProfileScreen() {
 
   return (
     <View className="flex-1 bg-surface-bg">
-      <View className="flex-row items-center px-4 pt-14 pb-4">
-        <TouchableOpacity onPress={() => router.back()} className="p-1 mr-3" hitSlop={8}>
-          <Ionicons name="arrow-back" size={22} color="#FAFAFA" />
-        </TouchableOpacity>
-        <Text className="text-text-primary text-lg font-bold flex-1">Perfil</Text>
-      </View>
+      <ScreenHeader title="Perfil" onBack={() => router.back()} />
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-        <View className="items-center pt-8 pb-6 px-4">
+        <View className="items-center pt-6 pb-7 px-4">
           {profile.avatarUrl ? (
-            <Image source={{ uri: profile.avatarUrl }} className="w-20 h-20 rounded-full mb-3" />
+            <Image source={{ uri: profile.avatarUrl }} className="w-24 h-24 rounded-full mb-4" />
           ) : (
-            <View className="w-20 h-20 rounded-full bg-surface-elevated items-center justify-center mb-3">
+            <View className="w-24 h-24 rounded-full bg-surface-elevated items-center justify-center mb-4">
               <Text className="text-text-primary text-3xl font-bold">
                 {profile.name.charAt(0).toUpperCase()}
               </Text>
             </View>
           )}
-          <Text className="text-text-primary text-xl font-bold">{profile.name}</Text>
-          <Text className="text-text-secondary text-sm mt-0.5">@{profile.username}</Text>
+          <Text className="text-text-primary text-[22px] font-extrabold tracking-tight">{profile.name}</Text>
+          <Text className="text-text-secondary text-sm mt-1">@{profile.username}</Text>
         </View>
 
-        <View className="flex-row mx-5 gap-3 mb-6">
-          <View className="flex-1 bg-surface-card rounded-2xl p-4 items-center">
-            <Text className="text-brand-green text-2xl font-bold">{profile.totalRuns}</Text>
-            <Text className="text-text-secondary text-xs mt-1">corridas</Text>
-          </View>
-          <View className="flex-1 bg-surface-card rounded-2xl p-4 items-center">
-            <Text className="text-brand-cyan text-2xl font-bold" numberOfLines={1} adjustsFontSizeToFit>
-              {formatDistance(profile.totalDistanceM)}
-            </Text>
-            <Text className="text-text-secondary text-xs mt-1">total</Text>
-          </View>
-          <View className="flex-1 bg-surface-card rounded-2xl p-4 items-center">
-            <Text className="text-brand-amber text-2xl font-bold" numberOfLines={1} adjustsFontSizeToFit>
-              {profile.bestPaceSkm > 0 ? formatPace(profile.bestPaceSkm) : '--:--'}
-            </Text>
-            <Text className="text-text-secondary text-xs mt-1">melhor pace</Text>
-          </View>
+        <View className="flex-row mx-5 gap-2.5 mb-7">
+          <Stat label="Corridas" value={profile.totalRuns} />
+          <Stat label="Total" value={formatDistance(profile.totalDistanceM)} />
+          <Stat label="Pace" value={profile.bestPaceSkm > 0 ? formatPace(profile.bestPaceSkm) : '--:--'} />
         </View>
 
-        <View className="mx-5 mb-6">
-          <View className="flex-row items-center gap-2 mb-3">
-            <Ionicons name="trophy" size={16} color="#A855F7" />
-            <Text className="text-text-primary font-bold text-base">Conquistas</Text>
-          </View>
+        <View className="mx-5 mb-7">
+          <SectionLabel label="Conquistas" />
 
           {loadingAchievements ? (
-            <ActivityIndicator color="#F97316" style={{ marginVertical: 16 }} />
+            <ActivityIndicator color={colors.brand.primary} style={{ marginVertical: 16 }} />
           ) : displayedAchievements.length === 0 ? (
-            <View className="bg-surface-card rounded-2xl p-5 items-center gap-2">
-              <Ionicons name="lock-closed-outline" size={28} color="#52525B" />
-              <Text className="text-text-disabled text-sm text-center">
-                Complete corridas para desbloquear conquistas
-              </Text>
-            </View>
+            <EmptyState
+              card
+              icon="lock-closed-outline"
+              title="Nenhuma conquista ainda"
+              subtitle="Complete corridas para desbloquear conquistas"
+            />
           ) : (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', margin: -4 }}>
               {displayedAchievements.map((a) => (
                 <View key={a.id} style={{ width: '33.33%', padding: 4 }}>
                   <View
-                    className="bg-surface-card rounded-2xl items-center justify-center"
+                    className="bg-surface-card rounded-[20px] items-center justify-center"
                     style={{ aspectRatio: 1, gap: 8 }}
                   >
-                    <View className="w-12 h-12 rounded-full bg-surface-elevated items-center justify-center">
+                    <View className="w-11 h-11 rounded-full bg-surface-elevated items-center justify-center">
                       <Ionicons
                         name={(ACHIEVEMENT_ICONS[a.slug] ?? 'star') as any}
-                        size={24}
-                        color="#A855F7"
+                        size={20}
+                        color={colors.brand.primary}
                       />
                     </View>
                     <Text
@@ -171,34 +174,22 @@ export default function FriendProfileScreen() {
         </View>
 
         {!!friendshipId && (
-          <View className="mx-5 gap-3">
-            <TouchableOpacity
-              onPress={handleToggleFavorite}
-              disabled={updateFavorite.isPending}
-              className={`bg-surface-card border rounded-2xl py-4 px-4 flex-row items-center justify-center gap-2 ${
-                isFavorite ? 'border-brand-amber' : 'border-surface-border'
-              }`}
-            >
-              <Ionicons
-                name={isFavorite ? 'star' : 'star-outline'}
-                size={20}
-                color={isFavorite ? '#FACC15' : '#A1A1AA'}
+          <View className="mx-5">
+            <ButtonStack>
+              <Button
+                label={isFavorite ? 'Acompanhando corridas' : 'Acompanhar corridas'}
+                icon={isFavorite ? 'star' : 'star-outline'}
+                variant="secondary"
+                onPress={handleToggleFavorite}
+                disabled={updateFavorite.isPending}
               />
-              <Text className={isFavorite ? 'text-brand-amber font-semibold' : 'text-text-primary font-semibold'}>
-                {isFavorite ? 'Acompanhando corridas' : 'Acompanhar corridas'}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={handleRemoveFriend}
-              disabled={removeFriend.isPending}
-              className="bg-surface-card border border-status-error rounded-2xl py-4 items-center"
-            >
-              {removeFriend.isPending ? (
-                <ActivityIndicator color="#EF4444" />
-              ) : (
-                <Text className="text-status-error font-semibold">Remover amigo</Text>
-              )}
-            </TouchableOpacity>
+              <Button
+                label="Remover amigo"
+                variant="danger"
+                onPress={handleRemoveFriend}
+                loading={removeFriend.isPending}
+              />
+            </ButtonStack>
           </View>
         )}
       </ScrollView>

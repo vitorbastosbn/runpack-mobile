@@ -1,7 +1,10 @@
-import { View, Text, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useMyAchievements } from '@features/achievements/hooks/useMyAchievements';
+import { ScreenHeader } from '@shared/components/ScreenHeader';
+import { EmptyState } from '@shared/components/EmptyState';
+import { colors } from '@constants/theme';
 import type { UserAchievement } from '@features/achievements/types';
 
 const ACHIEVEMENT_ICONS: Record<string, string> = {
@@ -21,16 +24,16 @@ function AchievementCard({ item }: { item: UserAchievement }) {
   });
 
   return (
-    <View className="bg-surface-card rounded-2xl px-4 py-3.5 mb-3 mx-4 flex-row items-center gap-4">
+    <View className="bg-surface-card rounded-[20px] px-4 py-4 mb-2.5 mx-5 flex-row items-center gap-4">
       <View className="w-12 h-12 rounded-full bg-surface-elevated items-center justify-center">
         <Ionicons
           name={(ACHIEVEMENT_ICONS[item.slug] ?? 'star') as any}
-          size={24}
-          color="#A855F7"
+          size={20}
+          color={colors.brand.primary}
         />
       </View>
       <View className="flex-1">
-        <Text className="text-text-primary font-semibold">{item.name}</Text>
+        <Text className="text-text-primary font-semibold text-[15px]">{item.name}</Text>
         <Text className="text-text-secondary text-xs mt-0.5">{item.description}</Text>
         <Text className="text-text-disabled text-xs mt-1">{date}</Text>
       </View>
@@ -44,48 +47,35 @@ export default function AchievementsScreen() {
 
   return (
     <View className="flex-1 bg-surface-bg">
-      {/* Fixed header */}
-      <View className="flex-row items-center px-4 pt-14 pb-4 bg-surface-bg">
-        <TouchableOpacity
-          onPress={() => router.back()}
-          hitSlop={8}
-          className="mr-3"
-          accessibilityLabel="Voltar"
-        >
-          <Ionicons name="arrow-back" size={24} color="#FAFAFA" />
-        </TouchableOpacity>
-        <Text className="text-text-primary text-xl font-bold">Conquistas</Text>
-      </View>
+      <ScreenHeader title="Conquistas" onBack={() => router.back()} />
 
       {isLoading ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#F97316" />
+          <ActivityIndicator color={colors.brand.primary} />
         </View>
       ) : isError ? (
-        <View className="flex-1 items-center justify-center px-8">
-          <Text className="text-text-primary text-base text-center mb-4">
-            Erro ao carregar conquistas
-          </Text>
-          <TouchableOpacity className="bg-brand-primary px-6 py-3 rounded-xl" onPress={() => refetch()}>
-            <Text className="text-white font-semibold">Tentar novamente</Text>
-          </TouchableOpacity>
+        <View className="flex-1 justify-center pb-24">
+          <EmptyState
+            icon="cloud-offline-outline"
+            title="Erro ao carregar conquistas"
+            cta="Tentar novamente"
+            onPress={() => refetch()}
+          />
         </View>
       ) : !data || data.length === 0 ? (
-        <View className="flex-1 items-center justify-center px-8">
-          <Ionicons name="trophy-outline" size={48} color="#3F3F46" />
-          <Text className="text-text-primary text-lg font-semibold mt-4 mb-2">
-            Nenhuma conquista ainda
-          </Text>
-          <Text className="text-text-secondary text-sm text-center">
-            Complete corridas para desbloquear conquistas
-          </Text>
+        <View className="flex-1 justify-center pb-24">
+          <EmptyState
+            icon="trophy-outline"
+            title="Nenhuma conquista ainda"
+            subtitle="Complete corridas para desbloquear conquistas"
+          />
         </View>
       ) : (
         <FlatList
           data={data}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <AchievementCard item={item} />}
-          contentContainerStyle={{ paddingTop: 16, paddingBottom: 32 }}
+          contentContainerStyle={{ paddingTop: 8, paddingBottom: 32 }}
         />
       )}
     </View>

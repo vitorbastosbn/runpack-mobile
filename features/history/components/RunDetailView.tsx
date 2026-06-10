@@ -1,60 +1,74 @@
-import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { ShareRunCard } from '@features/history/components/ShareRunCard';
 import { useRunDetail } from '@features/history/hooks/useRunDetail';
 import { useRunResultShare } from '@features/history/hooks/useRunResultShare';
+import { ScreenHeader } from '@shared/components/ScreenHeader';
+import { SectionLabel } from '@shared/components/SectionLabel';
+import { Button } from '@shared/components/Button';
+import { colors } from '@constants/theme';
 import type { RunParticipantResult } from '@features/history/types';
 import { formatDistance, formatDuration, formatPace, formatRank } from '@shared/utils/format';
 
-function BackHeader({ title }: { title?: string }) {
-  const router = useRouter();
-  return (
-    <View className="flex-row items-center px-4 pt-14 pb-4 gap-3">
-      <TouchableOpacity onPress={() => router.back()} hitSlop={8} activeOpacity={0.7}>
-        <Ionicons name="chevron-back" size={24} color="#F97316" />
-      </TouchableOpacity>
-      <Text className="text-text-primary text-lg font-bold flex-1" numberOfLines={1}>
-        {title ?? 'Corrida'}
-      </Text>
-    </View>
-  );
-}
-
-function ParticipantRow({ p, isMe }: { p: RunParticipantResult; isMe: boolean }) {
+function ParticipantRow({ p, isMe, isLast }: { p: RunParticipantResult; isMe: boolean; isLast: boolean }) {
   return (
     <View
-      className={`flex-row items-center px-4 py-3 border-b border-surface-border ${
+      className={`flex-row items-center px-4 py-3 ${isLast ? '' : 'border-b border-surface-border'} ${
         isMe ? 'bg-surface-elevated' : ''
       }`}
     >
       <Text className="text-text-secondary w-8 text-sm">{formatRank(p.finalRank)}</Text>
       <View className="flex-1">
-        <Text
-          className={`text-sm font-medium ${isMe ? 'text-brand-primary' : 'text-text-primary'}`}
-        >
+        <Text className={`text-sm font-semibold ${isMe ? 'text-brand-primary' : 'text-text-primary'}`}>
           {p.name}{isMe ? ' (você)' : ''}
         </Text>
-        <Text className="text-text-disabled text-xs">@{p.username}</Text>
+        <Text className="text-text-disabled text-xs mt-0.5">@{p.username}</Text>
       </View>
       <View className="items-end">
-        <Text className="text-text-primary text-sm font-bold">{formatDistance(p.totalDistanceM)}</Text>
-        <Text className="text-text-secondary text-xs">{formatDuration(p.totalTimeMs)}</Text>
+        <Text
+          className="text-text-primary text-sm font-extrabold"
+          style={{ fontVariant: ['tabular-nums'] }}
+        >
+          {formatDistance(p.totalDistanceM)}
+        </Text>
+        <Text className="text-text-secondary text-xs mt-0.5">{formatDuration(p.totalTimeMs)}</Text>
       </View>
     </View>
   );
 }
 
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <View className="items-center flex-1">
+      <Text
+        className="text-text-primary text-xl font-extrabold"
+        style={{ fontVariant: ['tabular-nums'] }}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+      >
+        {value}
+      </Text>
+      <Text
+        className="text-text-secondary text-[10px] font-semibold uppercase mt-1"
+        style={{ letterSpacing: 1 }}
+      >
+        {label}
+      </Text>
+    </View>
+  );
+}
+
 export function RunDetailView({ sessionId }: { sessionId: string }) {
+  const router = useRouter();
   const { data, isLoading, isError, refetch } = useRunDetail(sessionId);
   const { cardRef, isSharing, shareRunResult } = useRunResultShare();
 
   if (isLoading) {
     return (
       <View className="flex-1 bg-surface-bg">
-        <BackHeader />
+        <ScreenHeader title="Corrida" onBack={() => router.back()} />
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#F97316" />
+          <ActivityIndicator color={colors.brand.primary} />
         </View>
       </View>
     );
@@ -63,12 +77,10 @@ export function RunDetailView({ sessionId }: { sessionId: string }) {
   if (isError || !data) {
     return (
       <View className="flex-1 bg-surface-bg">
-        <BackHeader />
-        <View className="flex-1 items-center justify-center px-8 gap-4">
+        <ScreenHeader title="Corrida" onBack={() => router.back()} />
+        <View className="flex-1 items-center justify-center px-8 gap-5">
           <Text className="text-text-primary text-base text-center">Erro ao carregar corrida</Text>
-          <TouchableOpacity className="bg-brand-primary px-6 py-3 rounded-xl" onPress={() => refetch()}>
-            <Text className="text-white font-semibold">Tentar novamente</Text>
-          </TouchableOpacity>
+          <Button label="Tentar novamente" onPress={() => refetch()} />
         </View>
       </View>
     );
@@ -77,7 +89,7 @@ export function RunDetailView({ sessionId }: { sessionId: string }) {
   if (!data.myResult) {
     return (
       <View className="flex-1 bg-surface-bg">
-        <BackHeader />
+        <ScreenHeader title="Corrida" onBack={() => router.back()} />
         <View className="flex-1 items-center justify-center px-8">
           <Text className="text-text-primary text-base text-center">Resultado não disponível</Text>
         </View>
@@ -101,60 +113,47 @@ export function RunDetailView({ sessionId }: { sessionId: string }) {
   return (
     <View className="flex-1 bg-surface-bg">
       <ShareRunCard ref={cardRef} run={shareRun} />
-      <BackHeader title={title} />
+      <ScreenHeader title={title} subtitle={date} onBack={() => router.back()} />
       <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
-        <View className="px-4 pb-2">
-          <Text className="text-text-secondary text-xs">{date}</Text>
-        </View>
-
-        <View className="mx-4 bg-surface-card rounded-xl p-4 mb-6">
-          <Text className="text-text-secondary text-xs mb-3">Seus resultados</Text>
-          <View className="flex-row justify-between">
-            <View className="items-center flex-1">
-              <Text className="text-text-primary text-2xl font-bold">
-                {formatDistance(myResult.totalDistanceM)}
+        {/* My result */}
+        <View className="mx-5 mt-2 mb-7">
+          <View className="bg-surface-card rounded-[20px] p-5">
+            <View className="items-center mb-5">
+              <Text className="text-4xl">{formatRank(myResult.finalRank)}</Text>
+              <Text className="text-text-secondary text-xs mt-1.5">
+                {myResult.finalRank}º de {participants.length} participante{participants.length !== 1 ? 's' : ''}
               </Text>
-              <Text className="text-text-secondary text-xs">distância</Text>
             </View>
-            <View className="items-center flex-1">
-              <Text className="text-text-primary text-2xl font-bold">
-                {formatDuration(myResult.totalTimeMs)}
-              </Text>
-              <Text className="text-text-secondary text-xs">tempo</Text>
-            </View>
-            <View className="items-center flex-1">
-              <Text className="text-text-primary text-2xl font-bold">
-                {formatPace(myResult.avgPaceSkm)}
-              </Text>
-              <Text className="text-text-secondary text-xs">pace</Text>
+            <View className="flex-row justify-between">
+              <Metric label="Distância" value={formatDistance(myResult.totalDistanceM)} />
+              <Metric label="Tempo" value={formatDuration(myResult.totalTimeMs)} />
+              <Metric label="Pace" value={formatPace(myResult.avgPaceSkm)} />
             </View>
           </View>
-          <View className="mt-4 items-center">
-            <Text className="text-4xl">{formatRank(myResult.finalRank)}</Text>
-            <Text className="text-text-secondary text-xs mt-1">
-              {myResult.finalRank}º de {participants.length} participante{participants.length !== 1 ? 's' : ''}
-            </Text>
+          <View className="mt-3">
+            <Button
+              label={isSharing ? 'Preparando imagem...' : 'Compartilhar resultado'}
+              icon="share-social"
+              variant="secondary"
+              onPress={shareRunResult}
+              disabled={isSharing}
+            />
           </View>
-          <TouchableOpacity
-            className={`mt-5 rounded-xl py-3 items-center justify-center flex-row gap-2 border ${
-              isSharing ? 'bg-surface-elevated border-surface-border' : 'bg-surface-bg border-brand-primary/40'
-            }`}
-            onPress={shareRunResult}
-            disabled={isSharing}
-            activeOpacity={0.85}
-          >
-            <Ionicons name="share-social" size={18} color={isSharing ? '#A1A1AA' : '#F97316'} />
-            <Text className={`font-bold ${isSharing ? 'text-text-secondary' : 'text-brand-primary'}`}>
-              {isSharing ? 'Preparando imagem...' : 'Compartilhar resultado'}
-            </Text>
-          </TouchableOpacity>
         </View>
 
-        <Text className="text-text-secondary text-xs px-4 mb-2">Ranking</Text>
-        <View className="bg-surface-card rounded-xl mx-4 overflow-hidden">
-          {participants.map((p) => (
-            <ParticipantRow key={p.userId} p={p} isMe={p.userId === myResult.userId} />
-          ))}
+        {/* Ranking */}
+        <View className="mx-5">
+          <SectionLabel label="Ranking" />
+          <View className="bg-surface-card rounded-[20px] overflow-hidden">
+            {participants.map((p, i) => (
+              <ParticipantRow
+                key={p.userId}
+                p={p}
+                isMe={p.userId === myResult.userId}
+                isLast={i === participants.length - 1}
+              />
+            ))}
+          </View>
         </View>
       </ScrollView>
     </View>
