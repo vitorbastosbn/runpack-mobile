@@ -14,8 +14,8 @@ import { Avatar } from '@shared/components/Avatar';
 import { MemberAvatarStack } from '@shared/components/MemberAvatarStack';
 import { SectionLabel } from '@shared/components/SectionLabel';
 import { EmptyState } from '@shared/components/EmptyState';
-import { Fab } from '@shared/components/Fab';
 import { colors } from '@constants/theme';
+import { groupGradient } from '@shared/utils/groupColors';
 import { useAuthStore } from '@store/auth.store';
 import { useSessionStore } from '@store/session.store';
 import { useCreateSession, useJoinSession } from '@features/sessions/hooks/useCreateSession';
@@ -31,27 +31,35 @@ import type { RunSummary } from '@features/history/types';
 
 const MAX_VISIBLE_AVATARS = 5;
 
-// Gradientes profundos, harmonizados com o acento #FF5A1F — ricos sem virar arco-íris.
-const CARD_GRADIENTS: [string, string][] = [
-  ['#FF5A1F', '#B23000'], // laranja — assinatura
-  ['#0E7490', '#063A4A'], // petróleo
-  ['#15803D', '#073D1E'], // verde profundo
-  ['#6D28D9', '#34106E'], // violeta
-  ['#B45309', '#5C2A04'], // âmbar queimado
-];
+function greetingForNow(): string {
+  const h = new Date().getHours();
+  if (h < 6) return 'Boa madrugada';
+  if (h < 12) return 'Bom dia';
+  if (h < 18) return 'Boa tarde';
+  return 'Boa noite';
+}
+
+function todayLabel(): string {
+  const label = new Date().toLocaleDateString('pt-BR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+/* ---------------------------------- blocks --------------------------------- */
 
 function GroupCard({
   group,
-  index,
   members,
   onPress,
 }: {
   group: Group;
-  index: number;
   members: GroupMember[];
   onPress: () => void;
 }) {
-  const [gradStart, gradEnd] = CARD_GRADIENTS[index % CARD_GRADIENTS.length];
+  const [gradStart, gradEnd] = groupGradient(group.id);
 
   return (
     <TouchableOpacity style={{ width: 160, marginRight: 12 }} onPress={onPress} activeOpacity={0.85}>
@@ -97,70 +105,54 @@ function GroupCard({
   );
 }
 
-function GroupCardWithMembers({
-  group,
-  index,
-  onPress,
-}: {
-  group: Group;
-  index: number;
-  onPress: () => void;
-}) {
+function GroupCardWithMembers({ group, onPress }: { group: Group; onPress: () => void }) {
   const { data: allMembers } = useGroupMembers(group.id);
   const members = (allMembers ?? []).slice(0, MAX_VISIBLE_AVATARS);
-  return <GroupCard group={group} index={index} members={members} onPress={onPress} />;
+  return <GroupCard group={group} members={members} onPress={onPress} />;
 }
 
-function StatCard({ label, value }: { label: string; value: string | number }) {
+function StatStrip({
+  totalRuns,
+  totalDistanceM,
+  bestPaceSkm,
+}: {
+  totalRuns: number;
+  totalDistanceM: number;
+  bestPaceSkm: number;
+}) {
+  const items = [
+    { label: 'Corridas', value: String(totalRuns) },
+    { label: 'Total', value: formatDistance(totalDistanceM) },
+    { label: 'Melhor pace', value: bestPaceSkm > 0 ? formatPace(bestPaceSkm) : '--:--' },
+  ];
   return (
-    <View className="flex-1 bg-surface-card rounded-[20px] px-3 py-4 items-center">
-      <Text
-        className="text-text-primary text-xl font-extrabold"
-        style={{ fontVariant: ['tabular-nums'] }}
-        numberOfLines={1}
-        adjustsFontSizeToFit
-      >
-        {value}
-      </Text>
-      <Text
-        className="text-text-secondary text-[10px] font-semibold uppercase mt-1"
-        style={{ letterSpacing: 1 }}
-      >
-        {label}
-      </Text>
+    <View className="bg-surface-card rounded-[20px] flex-row py-5 mb-7">
+      {items.map((item, i) => (
+        <View
+          key={item.label}
+          className={`flex-1 items-center ${i > 0 ? 'border-l border-surface-border' : ''}`}
+        >
+          <Text
+            className="text-text-primary text-lg font-extrabold"
+            style={{ fontVariant: ['tabular-nums'] }}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+          >
+            {item.value}
+          </Text>
+          <Text
+            className="text-text-secondary text-[10px] font-semibold uppercase mt-1"
+            style={{ letterSpacing: 0.8 }}
+          >
+            {item.label}
+          </Text>
+        </View>
+      ))}
     </View>
   );
 }
 
-function RunCard({ run, onPress }: { run: RunSummary; onPress: () => void }) {
-  const date = new Date(run.startedAt).toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: 'short',
-  });
-  return (
-    <TouchableOpacity
-      className="bg-surface-card rounded-[20px] mb-2.5 px-4 py-4 flex-row items-center"
-      onPress={onPress}
-      activeOpacity={0.8}
-    >
-      <View className="flex-1">
-        <Text className="text-text-secondary text-xs mb-1">{date}</Text>
-        <Text
-          className="text-text-primary font-extrabold text-lg"
-          style={{ fontVariant: ['tabular-nums'] }}
-        >
-          {formatDistance(run.totalDistanceM)}
-        </Text>
-        <Text className="text-text-secondary text-xs mt-0.5">
-          {formatDuration(run.totalTimeMs)} · {formatPace(run.avgPaceSkm)}
-        </Text>
-      </View>
-      <Text className="text-2xl ml-4">{formatRank(run.finalRank)}</Text>
-    </TouchableOpacity>
-  );
-}
-
-function ActiveGroupRunCard({
+function LiveRunRow({
   run,
   onPress,
   disabled,
@@ -191,9 +183,7 @@ function ActiveGroupRunCard({
           {isFriendRun ? run.creatorName : run.groupName}
         </Text>
         <Text className="text-text-secondary text-xs mt-0.5">
-          {isFriendRun
-            ? `${run.participantCount} ${run.participantCount === 1 ? 'corredor' : 'corredores'}`
-            : `${run.participantCount} correndo`}
+          {run.participantCount} {run.participantCount === 1 ? 'corredor' : 'correndo'}
         </Text>
       </View>
       <View className="w-10 h-10 rounded-full bg-surface-elevated items-center justify-center">
@@ -206,6 +196,47 @@ function ActiveGroupRunCard({
     </TouchableOpacity>
   );
 }
+
+function RecentRunRow({
+  run,
+  isLast,
+  onPress,
+}: {
+  run: RunSummary;
+  isLast: boolean;
+  onPress: () => void;
+}) {
+  const date = new Date(run.startedAt).toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: 'short',
+  });
+  return (
+    <TouchableOpacity
+      className={`flex-row items-center py-3.5 ${isLast ? '' : 'border-b border-surface-border'}`}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      <View className="w-12">
+        <Text className="text-text-secondary text-xs">{date}</Text>
+      </View>
+      <View className="flex-1 ml-2">
+        <Text
+          className="text-text-primary font-extrabold text-[16px]"
+          style={{ fontVariant: ['tabular-nums'] }}
+        >
+          {formatDistance(run.totalDistanceM)}
+        </Text>
+        <Text className="text-text-secondary text-xs mt-0.5">
+          {formatDuration(run.totalTimeMs)} · {formatPace(run.avgPaceSkm)}
+          {run.groupName ? ` · ${run.groupName}` : ''}
+        </Text>
+      </View>
+      <Text className="text-xl ml-3">{formatRank(run.finalRank)}</Text>
+    </TouchableOpacity>
+  );
+}
+
+/* ---------------------------------- screen --------------------------------- */
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -232,7 +263,7 @@ export default function HomeScreen() {
 
   const groups = groupsData ?? [];
   const visibleActiveRuns = activeRuns.slice(0, 3);
-  const recentRuns = historyData?.pages[0]?.content.slice(0, 3) ?? [];
+  const recentRuns = historyData?.pages[0]?.content.slice(0, 4) ?? [];
   const firstName = (profile?.name ?? user?.name ?? '').split(' ')[0];
 
   const onRefresh = async () => {
@@ -243,61 +274,81 @@ export default function HomeScreen() {
 
   return (
     <View className="flex-1 bg-surface-bg">
-      {/* Fixed header */}
-      <View className="px-5 pt-14 pb-4 flex-row items-center justify-between">
+      {/* Header — date + greeting + avatar */}
+      <View className="px-5 pt-14 pb-5 flex-row items-center justify-between">
         <View className="flex-1 mr-4">
-          <Text className="text-text-secondary text-sm">Bem-vindo de volta,</Text>
           <Text
-            className="text-text-primary text-[26px] font-extrabold tracking-tight"
+            className="text-text-secondary text-[11px] font-semibold uppercase"
+            style={{ letterSpacing: 1.4 }}
+          >
+            {todayLabel()}
+          </Text>
+          <Text
+            className="text-text-primary text-[26px] font-extrabold tracking-tight mt-0.5"
             numberOfLines={1}
           >
-            {firstName || 'Corredor'}
+            {greetingForNow()}, {firstName || 'Corredor'}
           </Text>
         </View>
-        <TouchableOpacity onPress={() => router.push('/(tabs)/profile')} activeOpacity={0.8}>
+        <TouchableOpacity
+          onPress={() => router.push('/(tabs)/profile')}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Abrir perfil"
+        >
           <Avatar name={profile?.name ?? user?.name ?? '?'} avatarUrl={profile?.avatarUrl} size={44} />
         </TouchableOpacity>
       </View>
 
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 110 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 130 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brand.primary} />
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* Active session banner */}
-        {sessionId && (
-          <TouchableOpacity
-            className="bg-surface-card rounded-[20px] px-4 py-3.5 flex-row items-center justify-between mb-5"
-            onPress={() => router.push('/(modal)/live-session')}
-            activeOpacity={0.85}
-          >
-            <View className="flex-row items-center gap-2.5">
-              <View className="w-2 h-2 rounded-full bg-status-success" />
-              <Text className="text-text-primary font-semibold text-sm">Corrida em andamento</Text>
-            </View>
-            <Ionicons name="arrow-forward" size={16} color={colors.status.success} />
-          </TouchableOpacity>
-        )}
-
         {/* Stats */}
         {profileLoading ? (
           <View className="h-20 bg-surface-card rounded-[20px] mb-7 items-center justify-center">
             <ActivityIndicator color={colors.brand.primary} />
           </View>
         ) : profile ? (
-          <View className="flex-row gap-2.5 mb-7">
-            <StatCard label="Corridas" value={profile.totalRuns} />
-            <StatCard label="Total" value={formatDistance(profile.totalDistanceM)} />
-            <StatCard
-              label="Pace"
-              value={profile.bestPaceSkm > 0 ? formatPace(profile.bestPaceSkm) : '--:--'}
-            />
-          </View>
+          <StatStrip
+            totalRuns={profile.totalRuns}
+            totalDistanceM={profile.totalDistanceM}
+            bestPaceSkm={profile.bestPaceSkm}
+          />
         ) : null}
 
-        {/* Groups */}
+        {/* Live now */}
+        <View className="mb-7">
+          <SectionLabel
+            label="Ao vivo agora"
+            action={activeRuns.length > 3 ? `Ver todas (${activeRuns.length})` : undefined}
+            onAction={() => router.push('/active-runs')}
+          />
+          {activeRunsLoading ? (
+            <ActivityIndicator color={colors.brand.primary} />
+          ) : activeRuns.length === 0 ? (
+            <EmptyState
+              card
+              icon="radio-outline"
+              title="Nenhuma corrida em andamento"
+              subtitle="Quando um amigo ou grupo iniciar uma corrida, ela aparece aqui"
+            />
+          ) : (
+            visibleActiveRuns.map((run) => (
+              <LiveRunRow
+                key={run.sessionId}
+                run={run}
+                disabled={isJoiningSession}
+                onPress={() => joinSession(run.sessionId)}
+              />
+            ))
+          )}
+        </View>
+
+        {/* Groups rail */}
         <View className="mb-7">
           <SectionLabel
             label="Meus grupos"
@@ -317,11 +368,10 @@ export default function HomeScreen() {
             />
           ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {groups.slice(0, 3).map((group, i) => (
+              {groups.slice(0, 5).map((group) => (
                 <GroupCardWithMembers
                   key={group.id}
                   group={group}
-                  index={i}
                   onPress={() => router.push(`/(tabs)/groups/${group.id}`)}
                 />
               ))}
@@ -329,35 +379,7 @@ export default function HomeScreen() {
           )}
         </View>
 
-        {/* Active group runs */}
-        <View className="mb-7">
-          <SectionLabel
-            label="Ao vivo agora"
-            action={activeRuns.length > 3 ? `Ver todas (${activeRuns.length})` : undefined}
-            onAction={() => router.push('/active-runs')}
-          />
-          {activeRunsLoading ? (
-            <ActivityIndicator color={colors.brand.primary} />
-          ) : activeRuns.length === 0 ? (
-            <EmptyState
-              card
-              icon="radio-outline"
-              title="Nenhuma corrida em andamento"
-              subtitle="Entre em um grupo quando alguém iniciar uma corrida"
-            />
-          ) : (
-            visibleActiveRuns.map((run) => (
-              <ActiveGroupRunCard
-                key={run.sessionId}
-                run={run}
-                disabled={isJoiningSession}
-                onPress={() => joinSession(run.sessionId)}
-              />
-            ))
-          )}
-        </View>
-
-        {/* Recent runs */}
+        {/* Recent runs — flat editorial list */}
         <View>
           <SectionLabel
             label="Corridas recentes"
@@ -375,13 +397,16 @@ export default function HomeScreen() {
               subtitle="Toque no botão abaixo para começar!"
             />
           ) : (
-            recentRuns.map((run) => (
-              <RunCard
-                key={run.sessionId}
-                run={run}
-                onPress={() => router.push(`/(tabs)/history/${run.sessionId}`)}
-              />
-            ))
+            <View>
+              {recentRuns.map((run, i) => (
+                <RecentRunRow
+                  key={run.sessionId}
+                  run={run}
+                  isLast={i === recentRuns.length - 1}
+                  onPress={() => router.push(`/(tabs)/history/${run.sessionId}`)}
+                />
+              ))}
+            </View>
           )}
         </View>
       </ScrollView>
@@ -396,12 +421,47 @@ export default function HomeScreen() {
         }}
       />
 
-      <Fab
-        icon="flash"
-        onPress={() => setGoalModalVisible(true)}
-        loading={isCreatingSession}
-        accessibilityLabel="Iniciar corrida"
-      />
+      {/* Docked action — start a run, or get back to the live one */}
+      <View className="absolute bottom-0 left-0 right-0 px-5 pt-3 pb-6 bg-surface-bg">
+        {sessionId ? (
+          <TouchableOpacity
+            className="h-14 rounded-2xl bg-surface-elevated flex-row items-center justify-center gap-2.5"
+            onPress={() => router.push('/(modal)/live-session')}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="Voltar à corrida em andamento"
+          >
+            <View className="w-2 h-2 rounded-full bg-status-success" />
+            <Text className="text-text-primary font-bold text-base">Voltar à corrida</Text>
+            <Ionicons name="arrow-forward" size={16} color={colors.status.success} />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            className="h-14 rounded-2xl bg-brand-primary flex-row items-center justify-center gap-2"
+            style={{
+              shadowColor: colors.brand.primary,
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.35,
+              shadowRadius: 14,
+              elevation: 10,
+            }}
+            onPress={() => setGoalModalVisible(true)}
+            disabled={isCreatingSession}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="Iniciar corrida"
+          >
+            {isCreatingSession ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <>
+                <Ionicons name="flash" size={18} color="#fff" />
+                <Text className="text-white font-bold text-base">Iniciar corrida</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 }
