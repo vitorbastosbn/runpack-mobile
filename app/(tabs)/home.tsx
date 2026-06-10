@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Avatar } from '@shared/components/Avatar';
 import { MemberAvatarStack } from '@shared/components/MemberAvatarStack';
 import { SectionLabel } from '@shared/components/SectionLabel';
@@ -59,48 +58,52 @@ function GroupCard({
   members: GroupMember[];
   onPress: () => void;
 }) {
-  const [gradStart, gradEnd] = groupGradient(group.id);
+  const live = !!group.activeSessionId;
+  const [accent] = groupGradient(group.id);
 
   return (
-    <TouchableOpacity style={{ width: 160, marginRight: 12 }} onPress={onPress} activeOpacity={0.85}>
-      <LinearGradient
-        colors={[gradStart, gradEnd]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={{ borderRadius: 20, padding: 16, height: 164, overflow: 'hidden' }}
-      >
-        {/* Decorative run icon */}
-        <View style={{ position: 'absolute', right: -8, bottom: 24, opacity: 0.14 }}>
-          <Ionicons name="walk" size={96} color="#fff" />
-        </View>
+    <TouchableOpacity
+      className="bg-surface-card rounded-[20px] p-4"
+      style={{ width: 160, height: 150, marginRight: 12 }}
+      onPress={onPress}
+      activeOpacity={0.85}
+    >
+      {/* Ponto de cor — tag mínima com a cor identitária do grupo */}
+      <View
+        style={{
+          width: 28,
+          height: 5,
+          borderRadius: 999,
+          backgroundColor: live ? colors.status.success : accent,
+        }}
+      />
 
-        <View className="flex-row items-start">
-          <Text className="text-white text-[13px] font-bold flex-1" numberOfLines={2}>
-            {group.name}
-          </Text>
-          {group.myRole === 'admin' && (
-            <View className="bg-white/20 rounded-full px-2 py-0.5 ml-2">
-              <Text className="text-white font-bold" style={{ fontSize: 9, letterSpacing: 0.5 }}>
-                ADMIN
-              </Text>
-            </View>
-          )}
-        </View>
-
-        <View className="flex-1 justify-center">
+      <View className="flex-1 justify-end">
+        <Text className="text-text-primary text-[16px] font-bold leading-[21px]" numberOfLines={2}>
+          {group.name}
+        </Text>
+        {live ? (
           <Text
-            className="text-white text-[40px] font-extrabold"
-            style={{ fontVariant: ['tabular-nums'], letterSpacing: -1 }}
+            className="text-status-success text-[10px] font-bold uppercase mt-1"
+            style={{ letterSpacing: 1 }}
           >
-            {group.memberCount}
+            Ao vivo
           </Text>
-          <Text className="text-white/70 text-xs -mt-1">
-            {group.memberCount === 1 ? 'membro' : 'membros'}
+        ) : (
+          <Text className="text-text-secondary text-xs mt-1" numberOfLines={1}>
+            {group.memberCount} {group.memberCount === 1 ? 'membro' : 'membros'}
+            {group.myRole === 'admin' ? ' · admin' : ''}
           </Text>
-        </View>
+        )}
+      </View>
 
-        <MemberAvatarStack members={members} totalCount={group.memberCount} borderColor={gradEnd} />
-      </LinearGradient>
+      <View className="mt-3">
+        <MemberAvatarStack
+          members={members}
+          totalCount={group.memberCount}
+          borderColor={colors.surface.card}
+        />
+      </View>
     </TouchableOpacity>
   );
 }
