@@ -2,7 +2,7 @@ import { http } from '@shared/utils/http';
 import type { SessionItem, SessionDetail, ActiveRun } from '../types';
 
 export const sessionsService = {
-  async getActiveGroupRuns(): Promise<ActiveRun[]> {
+  async getActiveRuns(): Promise<ActiveRun[]> {
     const { data } = await http.get<ActiveRun[]>('/sessions/active');
     return data;
   },

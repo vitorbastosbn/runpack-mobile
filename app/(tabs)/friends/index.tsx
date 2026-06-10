@@ -24,12 +24,15 @@ export default function FriendsScreen() {
   const friends = friendsData?.pages.flatMap((p) => p.content) ?? [];
   const { data: requestCount = 0 } = useFriendRequestsCount();
   const { data: searchResults = [], isFetching: searching } = useUserSearch(debouncedQuery);
-  const { sendRequest, removeFriend } = useFriendActions();
+  const { sendRequest } = useFriendActions();
 
   const isSearching = debouncedQuery.trim().length >= 2;
 
   const renderFriend = useCallback(({ item }: { item: Friendship }) => (
-    <View className="flex-row items-center bg-surface-card border border-surface-border rounded-xl px-4 py-3 mb-2">
+    <TouchableOpacity
+      onPress={() => router.push(`/(tabs)/friends/${item.user.id}?friendshipId=${item.id}`)}
+      className="flex-row items-center bg-surface-card border border-surface-border rounded-xl px-4 py-3 mb-2"
+    >
       <View className="mr-3">
         <Avatar name={item.user.name} avatarUrl={item.user.avatarUrl} />
       </View>
@@ -37,11 +40,9 @@ export default function FriendsScreen() {
         <Text className="text-text-primary font-semibold">{item.user.name}</Text>
         <Text className="text-text-secondary text-xs">{item.user.username}</Text>
       </View>
-      <TouchableOpacity onPress={() => removeFriend.mutate(item.id)} className="p-2" hitSlop={8}>
-        <Ionicons name="person-remove-outline" size={18} color="#A1A1AA" />
-      </TouchableOpacity>
-    </View>
-  ), [removeFriend]);
+      <Ionicons name="chevron-forward" size={16} color="#A1A1AA" />
+    </TouchableOpacity>
+  ), [router]);
 
   const renderSearchResult = useCallback(({ item }: { item: UserSearchResult }) => {
     const isPendingSent = item.relation === 'pending_sent' || sentIds.has(item.id);
@@ -64,9 +65,13 @@ export default function FriendsScreen() {
           <Text className="text-text-secondary text-xs">{item.username}</Text>
         </View>
         {isAccepted ? (
-          <View className="px-3 py-1.5 rounded-lg bg-surface-elevated">
+          <TouchableOpacity
+            onPress={() => router.push(`/(tabs)/friends/${item.id}?friendshipId=${item.friendshipId}`)}
+            className="px-3 py-1.5 rounded-lg bg-surface-elevated flex-row items-center gap-1"
+          >
             <Text className="text-xs font-semibold text-status-success">Amigos</Text>
-          </View>
+            <Ionicons name="chevron-forward" size={12} color="#22C55E" />
+          </TouchableOpacity>
         ) : (
           <TouchableOpacity
             onPress={isPendingSent ? undefined : handleAdd}
@@ -80,7 +85,7 @@ export default function FriendsScreen() {
         )}
       </View>
     );
-  }, [sendRequest, sentIds]);
+  }, [sendRequest, sentIds, router]);
 
   return (
     <View className="flex-1 bg-surface-bg">

@@ -13,6 +13,7 @@ const MAX_VISIBLE_AVATARS = 6;
 function GroupListCard({ group, onPress }: { group: Group; onPress: () => void }) {
   const { data: allMembers } = useGroupMembers(group.id);
   const members = (allMembers ?? []).slice(0, MAX_VISIBLE_AVATARS);
+  const adminMember = (allMembers ?? []).find((m) => m.role === 'admin');
 
   return (
     <TouchableOpacity
@@ -22,28 +23,29 @@ function GroupListCard({ group, onPress }: { group: Group; onPress: () => void }
       accessibilityRole="button"
       accessibilityLabel={`Grupo ${group.name}, ${group.memberCount} membros`}
     >
-      {/* Title + role */}
+      {/* Title + admin star */}
       <View className="flex-row items-center gap-2">
         <Text className="text-text-primary font-bold text-base flex-1" numberOfLines={1}>
           {group.name}
         </Text>
         {group.myRole === 'admin' && (
-          <View className="rounded-md bg-brand-primary/20 px-1.5 py-px">
-            <Text
-              className="text-brand-primary font-bold"
-              style={{ fontSize: 10, letterSpacing: 0.5 }}
-            >
-              ADMIN
-            </Text>
-          </View>
+          <Ionicons name="star" size={16} color="#F97316" />
         )}
       </View>
 
       {group.description ? (
-        <Text className="text-text-secondary text-sm mt-1" numberOfLines={1}>
+        <Text className="text-text-secondary text-sm mt-1">
           {group.description}
         </Text>
       ) : null}
+
+      {/* Admin info */}
+      {adminMember && (
+        <View className="flex-row items-center gap-1.5 mt-2 bg-surface-elevated rounded-full px-2.5 py-1" style={{ alignSelf: 'flex-start' }}>
+          <Ionicons name="shield-checkmark" size={11} color="#F97316" />
+          <Text className="text-text-secondary text-xs font-medium">{adminMember.name}</Text>
+        </View>
+      )}
 
       {/* Footer: avatars + status */}
       <View className="flex-row items-center justify-between mt-4 pt-4 border-t border-surface-border">
@@ -59,9 +61,9 @@ function GroupListCard({ group, onPress }: { group: Group; onPress: () => void }
         )}
 
         {group.activeSessionId ? (
-          <View className="flex-row items-center gap-1.5 bg-brand-primary/15 border border-brand-primary/40 rounded-full px-2.5 py-1">
-            <View className="w-1.5 h-1.5 rounded-full bg-brand-primary" />
-            <Text className="text-brand-primary text-xs font-semibold">Em corrida</Text>
+          <View className="flex-row items-center gap-1.5 bg-brand-green/15 border border-brand-green/40 rounded-full px-2.5 py-1">
+            <View className="w-1.5 h-1.5 rounded-full bg-brand-green" />
+            <Text className="text-brand-green text-xs font-semibold">Em corrida</Text>
           </View>
         ) : (
           <Text className="text-text-secondary text-xs">

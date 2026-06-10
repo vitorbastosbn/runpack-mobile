@@ -1,14 +1,11 @@
 import {
-  View, Text, ScrollView, ActivityIndicator, TouchableOpacity,
-  Image, Alert, Linking,
+  View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useLogout } from '@features/auth/hooks/useLogout';
 import { useMyProfile } from '@features/profile/hooks/useMyProfile';
 import { useWeeklyStats } from '@features/profile/hooks/useWeeklyStats';
 import { useMyAchievements } from '@features/achievements/hooks/useMyAchievements';
-import { useDeleteAccount } from '@features/profile/hooks/useProfileActions';
 import { formatDistance, formatPace } from '@shared/utils/format';
 
 const ACHIEVEMENT_ICONS: Record<string, string> = {
@@ -36,98 +33,20 @@ function WeekBar({ distanceM, maxDistance }: { distanceM: number; maxDistance: n
   );
 }
 
-function SectionHeader({ title, icon }: { title: string; icon: string }) {
+function SectionHeader({ title, icon, iconColor = '#F97316' }: { title: string; icon: string; iconColor?: string }) {
   return (
     <View className="flex-row items-center gap-2 mb-3">
-      <Ionicons name={icon as any} size={16} color="#F97316" />
+      <Ionicons name={icon as any} size={16} color={iconColor} />
       <Text className="text-text-primary font-bold text-base">{title}</Text>
     </View>
   );
 }
 
-function SettingsSectionLabel({ label }: { label: string }) {
-  return (
-    <Text
-      className="text-text-disabled text-xs font-semibold uppercase mb-2 mt-10 mx-1"
-      style={{ letterSpacing: 1.2 }}
-    >
-      {label}
-    </Text>
-  );
-}
-
-function SettingsRow({
-  icon,
-  label,
-  sublabel,
-  onPress,
-  destructive = false,
-  disabled = false,
-  hideChevron = false,
-}: {
-  icon: string;
-  label: string;
-  sublabel?: string;
-  onPress?: () => void;
-  destructive?: boolean;
-  disabled?: boolean;
-  hideChevron?: boolean;
-}) {
-  const color = destructive ? '#EF4444' : disabled ? '#52525B' : '#FAFAFA';
-  const iconColor = destructive ? '#EF4444' : disabled ? '#52525B' : '#A1A1AA';
-
-  return (
-    <TouchableOpacity
-      className="flex-row items-center px-4 py-4 bg-surface-card"
-      onPress={disabled ? undefined : onPress}
-      activeOpacity={disabled ? 1 : 0.65}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-    >
-      <Ionicons name={icon as any} size={20} color={iconColor} style={{ marginRight: 14 }} />
-      <View className="flex-1">
-        <Text style={{ color, fontSize: 15 }}>{label}</Text>
-        {sublabel ? (
-          <Text className="text-text-disabled text-xs mt-0.5">{sublabel}</Text>
-        ) : null}
-      </View>
-      {!hideChevron && !disabled && (
-        <Ionicons name="chevron-forward" size={16} color="#52525B" />
-      )}
-    </TouchableOpacity>
-  );
-}
-
-
 export default function ProfileScreen() {
   const router = useRouter();
-  const { logout } = useLogout();
   const { data: profile, isLoading } = useMyProfile();
   const { data: weeklyStats } = useWeeklyStats();
   const { data: achievements } = useMyAchievements();
-  const deleteAccount = useDeleteAccount();
-
-  const handleLogout = () => {
-    Alert.alert('Sair da conta', 'Tem certeza que deseja sair?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Sair', style: 'destructive', onPress: logout },
-    ]);
-  };
-
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      'Excluir conta',
-      'Todos os seus dados serão excluídos permanentemente — corridas, grupos, conquistas e histórico. Esta ação não pode ser desfeita.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir permanentemente',
-          style: 'destructive',
-          onPress: () => deleteAccount.mutate(),
-        },
-      ],
-    );
-  };
 
   if (isLoading || !profile) {
     return (
@@ -141,13 +60,25 @@ export default function ProfileScreen() {
   const periodTotalM = weeklyStats?.reduce((acc, w) => acc + w.totalDistanceM, 0) ?? 0;
 
   return (
-    <ScrollView
-        className="flex-1 bg-surface-bg"
+    <View className="flex-1 bg-surface-bg">
+      {/* Header */}
+      <View className="flex-row items-center justify-end px-4 pt-14 pb-2">
+        <TouchableOpacity
+          onPress={() => router.push('/(tabs)/profile/settings')}
+          className="p-2"
+          hitSlop={8}
+        >
+          <Ionicons name="settings-outline" size={22} color="#A1A1AA" />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView
+        className="flex-1"
         contentContainerStyle={{ paddingBottom: 60 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Avatar + identity */}
-        <View className="items-center pt-14 pb-6 px-6">
+        <View className="items-center pt-4 pb-6 px-6">
           <View className="p-0.5 rounded-full border-2 border-brand-primary mb-3">
             {profile.avatarUrl ? (
               <Image source={{ uri: profile.avatarUrl }} className="w-20 h-20 rounded-full" />
@@ -173,12 +104,12 @@ export default function ProfileScreen() {
         {/* Stats */}
         <View className="flex-row mx-5 gap-3 mb-6">
           <View className="flex-1 bg-surface-card rounded-2xl p-4 items-center">
-            <Text className="text-brand-primary text-2xl font-bold">{profile.totalRuns}</Text>
+            <Text className="text-brand-green text-2xl font-bold">{profile.totalRuns}</Text>
             <Text className="text-text-secondary text-xs mt-1">corridas</Text>
           </View>
           <View className="flex-1 bg-surface-card rounded-2xl p-4 items-center">
             <Text
-              className="text-brand-primary text-2xl font-bold"
+              className="text-brand-cyan text-2xl font-bold"
               numberOfLines={1}
               adjustsFontSizeToFit
             >
@@ -188,7 +119,7 @@ export default function ProfileScreen() {
           </View>
           <View className="flex-1 bg-surface-card rounded-2xl p-4 items-center">
             <Text
-              className="text-brand-primary text-2xl font-bold"
+              className="text-brand-amber text-2xl font-bold"
               numberOfLines={1}
               adjustsFontSizeToFit
             >
@@ -201,7 +132,7 @@ export default function ProfileScreen() {
         {/* Weekly chart */}
         {weeklyStats && weeklyStats.length > 0 && (
           <View className="mx-5 bg-surface-card rounded-2xl p-4 mb-6">
-            <SectionHeader title="Últimas 8 semanas" icon="bar-chart" />
+            <SectionHeader title="Últimas 8 semanas" icon="bar-chart" iconColor="#06B6D4" />
             <View className="flex-row items-end h-20">
               {weeklyStats.map((w) => (
                 <WeekBar key={w.weekStart} distanceM={w.totalDistanceM} maxDistance={maxWeekDistance} />
@@ -233,11 +164,11 @@ export default function ProfileScreen() {
         <View className="mx-5 mb-6">
           <View className="flex-row items-center justify-between mb-3">
             <View className="flex-row items-center gap-2">
-              <Ionicons name="trophy" size={16} color="#F97316" />
+              <Ionicons name="trophy" size={16} color="#A855F7" />
               <Text className="text-text-primary font-bold text-base">Conquistas</Text>
             </View>
             <TouchableOpacity onPress={() => router.push('/(tabs)/profile/achievements' as any)} hitSlop={8}>
-              <Text className="text-brand-primary text-sm font-medium">Ver todos</Text>
+              <Text className="text-brand-purple text-sm font-medium">Ver todos</Text>
             </TouchableOpacity>
           </View>
 
@@ -260,7 +191,7 @@ export default function ProfileScreen() {
                       <Ionicons
                         name={(ACHIEVEMENT_ICONS[a.slug] ?? 'star') as any}
                         size={24}
-                        color="#F97316"
+                        color="#A855F7"
                       />
                     </View>
                     <Text
@@ -276,51 +207,7 @@ export default function ProfileScreen() {
             </View>
           )}
         </View>
-
-        {/* Settings */}
-        <View className="mx-5">
-          {/* Suporte */}
-          <SettingsSectionLabel label="Suporte" />
-          <View className="rounded-2xl overflow-hidden border border-surface-border">
-            <SettingsRow
-              icon="mail-outline"
-              label="Contato com suporte"
-              onPress={() =>
-                Linking.openURL('mailto:suporte@runpack.app?subject=Suporte RunPack')
-              }
-            />
-            <View style={{ height: 1, backgroundColor: '#3F3F46' }} />
-            <SettingsRow
-              icon="document-text-outline"
-              label="Termos de uso"
-              onPress={() => Linking.openURL('https://runpack.app/termos')}
-            />
-            <View style={{ height: 1, backgroundColor: '#3F3F46' }} />
-            <SettingsRow
-              icon="shield-checkmark-outline"
-              label="Política de privacidade"
-              onPress={() => Linking.openURL('https://runpack.app/privacidade')}
-            />
-          </View>
-
-          {/* Conta */}
-          <SettingsSectionLabel label="Conta" />
-          <View className="rounded-2xl overflow-hidden border border-surface-border">
-            <SettingsRow
-              icon="log-out-outline"
-              label="Sair da conta"
-              onPress={handleLogout}
-            />
-            <View style={{ height: 1, backgroundColor: '#3F3F46' }} />
-            <SettingsRow
-              icon="trash-outline"
-              label="Excluir conta"
-              onPress={handleDeleteAccount}
-              destructive
-              hideChevron
-            />
-          </View>
-        </View>
       </ScrollView>
+    </View>
   );
 }

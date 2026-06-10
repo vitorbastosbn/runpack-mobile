@@ -26,7 +26,7 @@ function AchievementCard({ item }: { item: UserAchievement }) {
         <Ionicons
           name={(ACHIEVEMENT_ICONS[item.slug] ?? 'star') as any}
           size={24}
-          color="#F97316"
+          color="#A855F7"
         />
       </View>
       <View className="flex-1">

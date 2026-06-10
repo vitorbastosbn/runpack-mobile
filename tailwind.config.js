@@ -6,8 +6,12 @@ module.exports = {
     extend: {
       colors: {
         brand: {
-          primary: '#F97316',   // orange — ação principal
-          secondary: '#22D3EE', // cyan — destaque secundário
+          primary: '#F97316',   // orange — ação primária / CTA
+          secondary: '#22D3EE', // cyan claro — destaque secundário
+          green: '#22C55E',     // ativo / corridas / sucesso
+          cyan: '#06B6D4',      // informação / distância
+          purple: '#A855F7',    // conquistas
+          amber: '#F59E0B',     // pace / tempo
         },
         surface: {
           bg: '#09090B',        // fundo principal

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert, Share } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert, Share, Modal } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -31,6 +31,7 @@ export default function GroupDetailScreen() {
   const updateRole = useUpdateMemberRole(id);
   const { createSession, isLoading: startingSession } = useCreateSession();
   const [goalModalVisible, setGoalModalVisible] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
 
   const handleStartSession = () => setGoalModalVisible(true);
 
@@ -48,6 +49,7 @@ export default function GroupDetailScreen() {
       await Share.share({ message: `Entra no meu grupo no RunPack! ${invite.url}` });
     } catch {}
   };
+
 
   const handleDelete = () => {
     Alert.alert('Deletar grupo', `Tem certeza que deseja deletar "${group?.name}"?`, [
@@ -215,18 +217,9 @@ export default function GroupDetailScreen() {
             {group?.memberCount} {group?.memberCount === 1 ? 'membro' : 'membros'}
           </Text>
         </View>
-        <TouchableOpacity onPress={handleShareInvite} hitSlop={8} className="mr-3">
-          <Ionicons name="person-add-outline" size={20} color="#F97316" />
+        <TouchableOpacity onPress={() => setMenuVisible(true)} hitSlop={8}>
+          <Ionicons name="ellipsis-horizontal" size={24} color="#FAFAFA" />
         </TouchableOpacity>
-        {isAdmin ? (
-          <TouchableOpacity onPress={handleDelete} hitSlop={8}>
-            <Ionicons name="trash-outline" size={20} color="#EF4444" />
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity onPress={handleLeaveGroup} hitSlop={8}>
-            <Ionicons name="exit-outline" size={20} color="#EF4444" />
-          </TouchableOpacity>
-        )}
       </View>
 
       <FlatList
@@ -277,6 +270,68 @@ export default function GroupDetailScreen() {
         onClose={() => setGoalModalVisible(false)}
         onStart={handleConfirmStart}
       />
+
+      {/* Dropdown menu */}
+      <Modal visible={menuVisible} transparent animationType="fade" onRequestClose={() => setMenuVisible(false)}>
+        <TouchableOpacity
+          style={{ flex: 1 }}
+          activeOpacity={1}
+          onPress={() => setMenuVisible(false)}
+        >
+          <View
+            style={{
+              position: 'absolute',
+              top: 100,
+              right: 16,
+              backgroundColor: '#27272A',
+              borderRadius: 14,
+              borderWidth: 1,
+              borderColor: '#3F3F46',
+              overflow: 'hidden',
+              minWidth: 220,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.4,
+              shadowRadius: 12,
+              elevation: 8,
+            }}
+          >
+            <TouchableOpacity
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 14 }}
+              onPress={() => { setMenuVisible(false); handleShareInvite(); }}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="person-add-outline" size={18} color="#FAFAFA" />
+              <Text style={{ color: '#FAFAFA', fontSize: 15 }}>Convidar para o grupo</Text>
+            </TouchableOpacity>
+
+            <View style={{ height: 1, backgroundColor: '#3F3F46' }} />
+
+            <TouchableOpacity
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 14 }}
+              onPress={() => { setMenuVisible(false); handleLeaveGroup(); }}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="exit-outline" size={18} color="#EF4444" />
+              <Text style={{ color: '#EF4444', fontSize: 15 }}>Sair do grupo</Text>
+            </TouchableOpacity>
+
+            {isAdmin && (
+              <>
+                <View style={{ height: 1, backgroundColor: '#3F3F46' }} />
+                <TouchableOpacity
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 14 }}
+                  onPress={() => { setMenuVisible(false); handleDelete(); }}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                  <Text style={{ color: '#EF4444', fontSize: 15 }}>Deletar grupo</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }

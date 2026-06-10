@@ -2,13 +2,13 @@ import { useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useActiveGroupRuns } from '@features/sessions/hooks/useActiveRuns';
+import { useActiveRuns } from '@features/sessions/hooks/useActiveRuns';
 import { useJoinSession } from '@features/sessions/hooks/useCreateSession';
 import type { ActiveRun } from '@features/sessions/types';
 
 export default function ActiveRunsScreen() {
   const router = useRouter();
-  const { data: runs = [], isLoading, refetch, isRefetching } = useActiveGroupRuns();
+  const { data: runs = [], isLoading, refetch, isRefetching } = useActiveRuns();
   const { joinSession, isLoading: isJoining } = useJoinSession();
 
   const renderRun = useCallback(({ item }: { item: ActiveRun }) => (
@@ -26,7 +26,7 @@ export default function ActiveRunsScreen() {
             <Text className="text-status-success text-xs font-bold">Ao vivo</Text>
           </View>
           <Text className="text-text-primary font-bold text-base" numberOfLines={1}>
-            {item.groupName}
+            {item.groupName ?? item.creatorName}
           </Text>
           <Text className="text-text-secondary text-xs mt-0.5">
             {item.participantCount} {item.participantCount === 1 ? 'correndo' : 'correndo'}

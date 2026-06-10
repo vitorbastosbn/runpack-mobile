@@ -15,7 +15,8 @@ import { MemberAvatarStack } from '@shared/components/MemberAvatarStack';
 import { useAuthStore } from '@store/auth.store';
 import { useSessionStore } from '@store/session.store';
 import { useCreateSession, useJoinSession } from '@features/sessions/hooks/useCreateSession';
-import { useActiveGroupRuns } from '@features/sessions/hooks/useActiveRuns';
+import { useActiveRuns } from '@features/sessions/hooks/useActiveRuns';
+import { StartRaceModal } from '@features/sessions/components/StartRaceModal';
 import { useMyProfile } from '@features/profile/hooks/useMyProfile';
 import { useGroups, useGroupMembers } from '@features/groups/hooks/useGroups';
 import { useRunHistory } from '@features/history/hooks/useRunHistory';
@@ -173,6 +174,7 @@ function ActiveGroupRunCard({
   onPress: () => void;
   disabled: boolean;
 }) {
+  const isFriendRun = run.groupId == null;
   return (
     <TouchableOpacity
       className="bg-surface-card rounded-2xl mb-3 flex-row overflow-hidden"
@@ -189,10 +191,12 @@ function ActiveGroupRunCard({
               <Text className="text-status-success text-xs font-bold">Ao vivo</Text>
             </View>
             <Text className="text-text-primary font-bold text-base" numberOfLines={1}>
-              {run.groupName}
+              {isFriendRun ? run.creatorName : run.groupName}
             </Text>
             <Text className="text-text-secondary text-xs mt-0.5">
-              {run.participantCount} correndo
+              {isFriendRun
+                ? `${run.participantCount} ${run.participantCount === 1 ? 'corredor' : 'corredores'}`
+                : `${run.participantCount} correndo`}
             </Text>
           </View>
           <View className="items-center justify-center px-1">
@@ -217,10 +221,11 @@ export default function HomeScreen() {
 
   const { data: profile, refetch: refetchProfile, isLoading: profileLoading } = useMyProfile();
   const { data: groupsData, refetch: refetchGroups, isLoading: groupsLoading } = useGroups();
-  const { data: activeRuns = [], refetch: refetchActiveRuns, isLoading: activeRunsLoading } = useActiveGroupRuns();
+  const { data: activeRuns = [], refetch: refetchActiveRuns, isLoading: activeRunsLoading } = useActiveRuns();
   const { data: historyData, refetch: refetchHistory, isLoading: historyLoading } = useRunHistory();
 
   const [refreshing, setRefreshing] = useState(false);
+  const [goalModalVisible, setGoalModalVisible] = useState(false);
 
   // Refresh active runs each time home regains focus (covers members who
   // didn't receive a start/finish push).
@@ -281,10 +286,10 @@ export default function HomeScreen() {
             activeOpacity={0.85}
           >
             <View className="flex-row items-center gap-2">
-              <View className="w-2 h-2 rounded-full bg-brand-primary" />
-              <Text className="text-brand-primary font-semibold">Corrida em andamento</Text>
+              <View className="w-2 h-2 rounded-full bg-brand-green" />
+              <Text className="text-brand-green font-semibold">Corrida em andamento</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#F97316" />
+            <Ionicons name="chevron-forward" size={18} color="#22C55E" />
           </TouchableOpacity>
         )}
 
@@ -347,12 +352,12 @@ export default function HomeScreen() {
         <View className="mb-6">
           <View className="flex-row items-center justify-between mb-3">
             <View className="flex-row items-center gap-2">
-              <Ionicons name="radio-outline" size={16} color="#F97316" />
+              <Ionicons name="radio-outline" size={16} color="#22C55E" />
               <Text className="text-text-primary font-bold text-base">Corridas em andamento</Text>
             </View>
             {activeRuns.length > 3 && (
               <TouchableOpacity onPress={() => router.push('/active-runs')}>
-                <Text className="text-brand-primary text-sm">Ver todas ({activeRuns.length})</Text>
+                <Text className="text-brand-green text-sm">Ver todas ({activeRuns.length})</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -384,12 +389,12 @@ export default function HomeScreen() {
         <View>
           <View className="flex-row justify-between items-center mb-3">
             <View className="flex-row items-center gap-2">
-              <Ionicons name="time-outline" size={16} color="#F97316" />
+              <Ionicons name="time-outline" size={16} color="#F59E0B" />
               <Text className="text-text-primary font-bold text-base">Corridas recentes</Text>
             </View>
             {recentRuns.length > 0 && (
               <TouchableOpacity onPress={() => router.push('/(tabs)/history')}>
-                <Text className="text-brand-primary text-sm">Ver histórico</Text>
+                <Text className="text-brand-amber text-sm">Ver histórico</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -415,11 +420,21 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
 
+      <StartRaceModal
+        visible={goalModalVisible}
+        loading={isCreatingSession}
+        onClose={() => setGoalModalVisible(false)}
+        onStart={(distanceGoalM) => {
+          setGoalModalVisible(false);
+          createSession({ distanceGoalM });
+        }}
+      />
+
       {/* FAB */}
       <TouchableOpacity
         style={{ position: 'absolute', bottom: 28, right: 20 }}
         className="w-16 h-16 bg-brand-primary rounded-full items-center justify-center"
-        onPress={() => createSession({})}
+        onPress={() => setGoalModalVisible(true)}
         disabled={isCreatingSession}
         activeOpacity={0.85}
       >

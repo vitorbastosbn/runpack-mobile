@@ -32,8 +32,11 @@ export interface SessionDetail {
 
 export interface ActiveRun {
   sessionId: string;
-  groupId: string;
-  groupName: string;
+  groupId: string | null;
+  groupName: string | null;
+  creatorId: string;
+  creatorName: string;
+  creatorAvatarUrl: string | null;
   participantCount: number;
   startedAt: string;
 }

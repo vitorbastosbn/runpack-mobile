@@ -18,7 +18,7 @@ const ACHIEVEMENT_ICONS: Record<string, string> = {
   fast_five: 'flash',
 };
 
-export default function UserProfileScreen() {
+export default function FriendProfileScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { id, friendshipId } = useLocalSearchParams<{ id: string; friendshipId?: string }>();
@@ -73,7 +73,6 @@ export default function UserProfileScreen() {
 
   return (
     <View className="flex-1 bg-surface-bg">
-      {/* Header */}
       <View className="flex-row items-center px-4 pt-14 pb-4">
         <TouchableOpacity onPress={() => router.back()} className="p-1 mr-3" hitSlop={8}>
           <Ionicons name="arrow-back" size={22} color="#FAFAFA" />
@@ -82,7 +81,6 @@ export default function UserProfileScreen() {
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-        {/* Avatar + name + username */}
         <View className="items-center pt-8 pb-6 px-4">
           {profile.avatarUrl ? (
             <Image source={{ uri: profile.avatarUrl }} className="w-20 h-20 rounded-full mb-3" />
@@ -97,7 +95,6 @@ export default function UserProfileScreen() {
           <Text className="text-text-secondary text-sm mt-0.5">@{profile.username}</Text>
         </View>
 
-        {/* Stats */}
         <View className="flex-row mx-5 gap-3 mb-6">
           <View className="flex-1 bg-surface-card rounded-2xl p-4 items-center">
             <Text className="text-brand-green text-2xl font-bold">{profile.totalRuns}</Text>
@@ -117,7 +114,6 @@ export default function UserProfileScreen() {
           </View>
         </View>
 
-        {/* Achievements */}
         <View className="mx-5 mb-6">
           <View className="flex-row items-center gap-2 mb-3">
             <Ionicons name="trophy" size={16} color="#A855F7" />
@@ -162,7 +158,6 @@ export default function UserProfileScreen() {
           )}
         </View>
 
-        {/* Remove friend */}
         {!!friendshipId && (
           <View className="mx-5">
             <TouchableOpacity
