@@ -1,7 +1,9 @@
 import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { ShareRunCard } from '@features/history/components/ShareRunCard';
 import { useRunDetail } from '@features/history/hooks/useRunDetail';
+import { useRunResultShare } from '@features/history/hooks/useRunResultShare';
 import type { RunParticipantResult } from '@features/history/types';
 import { formatDistance, formatDuration, formatPace, formatRank } from '@shared/utils/format';
 
@@ -45,6 +47,7 @@ function ParticipantRow({ p, isMe }: { p: RunParticipantResult; isMe: boolean })
 
 export function RunDetailView({ sessionId }: { sessionId: string }) {
   const { data, isLoading, isError, refetch } = useRunDetail(sessionId);
+  const { cardRef, isSharing, shareRunResult } = useRunResultShare();
 
   if (isLoading) {
     return (
@@ -83,6 +86,12 @@ export function RunDetailView({ sessionId }: { sessionId: string }) {
   }
 
   const { myResult, participants } = data;
+  const shareRun = {
+    title: data.groupName ?? 'Corrida livre',
+    startedAt: data.startedAt,
+    myResult,
+    participants,
+  };
 
   const date = new Date(data.startedAt).toLocaleDateString('pt-BR', {
     day: '2-digit', month: 'long', year: 'numeric',
@@ -91,6 +100,7 @@ export function RunDetailView({ sessionId }: { sessionId: string }) {
 
   return (
     <View className="flex-1 bg-surface-bg">
+      <ShareRunCard ref={cardRef} run={shareRun} />
       <BackHeader title={title} />
       <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
         <View className="px-4 pb-2">
@@ -125,6 +135,19 @@ export function RunDetailView({ sessionId }: { sessionId: string }) {
               {myResult.finalRank}º de {participants.length} participante{participants.length !== 1 ? 's' : ''}
             </Text>
           </View>
+          <TouchableOpacity
+            className={`mt-5 rounded-xl py-3 items-center justify-center flex-row gap-2 border ${
+              isSharing ? 'bg-surface-elevated border-surface-border' : 'bg-surface-bg border-brand-primary/40'
+            }`}
+            onPress={shareRunResult}
+            disabled={isSharing}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="share-social" size={18} color={isSharing ? '#A1A1AA' : '#F97316'} />
+            <Text className={`font-bold ${isSharing ? 'text-text-secondary' : 'text-brand-primary'}`}>
+              {isSharing ? 'Preparando imagem...' : 'Compartilhar resultado'}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         <Text className="text-text-secondary text-xs px-4 mb-2">Ranking</Text>

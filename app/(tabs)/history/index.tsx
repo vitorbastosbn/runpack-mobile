@@ -29,9 +29,6 @@ function RunCard({ item, onPress }: { item: RunSummary; onPress: () => void }) {
           </View>
           <View className="items-end">
             <Text className="text-xl">{formatRank(item.finalRank)}</Text>
-            {item.totalParticipants > 1 && (
-              <Text className="text-text-disabled text-xs">de {item.totalParticipants}</Text>
-            )}
           </View>
         </View>
 

@@ -1,9 +1,13 @@
+import { useMemo } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSessionStore } from '@store/session.store';
 import { useSessionAchievements } from '@features/achievements/hooks/useSessionAchievements';
 import { useRunDetail } from '@features/history/hooks/useRunDetail';
+import { ShareRunCard } from '@features/history/components/ShareRunCard';
+import { useRunResultShare } from '@features/history/hooks/useRunResultShare';
+import type { ShareRunCardInput } from '@features/history/utils/shareRunResult';
 
 function formatTime(ms: number): string {
   const totalSec = Math.floor(ms / 1000);
@@ -29,14 +33,51 @@ const ACHIEVEMENT_ICONS: Record<string, string> = {
 export default function RunSummaryScreen() {
   const router = useRouter();
   const { sessionId, elapsedMs, distanceM, paceSKm, ranking, groupName, clearSession } = useSessionStore();
+  const { cardRef, isSharing, shareRunResult } = useRunResultShare();
 
   // Poll once after 2s delay so async achievement evaluation has time to complete
   const { data: achievements } = useSessionAchievements(sessionId ?? '', !!sessionId);
   const { data: runDetail } = useRunDetail(sessionId ?? '');
   const finalRanking = runDetail?.participants ?? [];
+  const shareRun = useMemo<ShareRunCardInput | null>(() => {
+    if (runDetail?.myResult) {
+      return {
+        title: runDetail.groupName ?? 'Corrida livre',
+        startedAt: runDetail.startedAt,
+        myResult: runDetail.myResult,
+        participants: runDetail.participants,
+      };
+    }
+
+    if (!sessionId) return null;
+
+    return {
+      title: groupName ?? 'Corrida livre',
+      myResult: {
+        userId: 'me',
+        name: 'Você',
+        username: 'voce',
+        totalDistanceM: distanceM,
+        totalTimeMs: elapsedMs,
+        avgPaceSkm: paceSKm,
+        finalRank: ranking.find((entry) => entry.distanceM === distanceM)?.rank ?? 1,
+      },
+      participants: ranking.map((entry) => ({
+        userId: entry.userId,
+        name: entry.username,
+        username: entry.username,
+        totalDistanceM: entry.distanceM,
+        totalTimeMs: entry.elapsedMs,
+        avgPaceSkm: entry.paceSKm,
+        finalRank: entry.rank,
+      })),
+    };
+  }, [distanceM, elapsedMs, groupName, paceSKm, ranking, runDetail, sessionId]);
 
   return (
-    <ScrollView className="flex-1 bg-surface-bg" contentContainerStyle={{ paddingBottom: 40 }}>
+    <View className="flex-1 bg-surface-bg">
+      {shareRun ? <ShareRunCard ref={cardRef} run={shareRun} /> : null}
+      <ScrollView className="flex-1 bg-surface-bg" contentContainerStyle={{ paddingBottom: 40 }}>
       <View className="px-6 pt-16 pb-8 items-center">
         <View className="w-20 h-20 rounded-full bg-brand-primary/20 border-2 border-brand-primary items-center justify-center mb-4">
           <Ionicons name="flag" size={36} color="#F97316" />
@@ -124,6 +165,21 @@ export default function RunSummaryScreen() {
       )}
 
       <View className="mx-4 gap-3">
+        {shareRun ? (
+          <TouchableOpacity
+            className={`w-full rounded-xl py-4 items-center justify-center flex-row gap-2 border ${
+              isSharing ? 'bg-surface-elevated border-surface-border' : 'bg-surface-card border-brand-primary/40'
+            }`}
+            onPress={shareRunResult}
+            disabled={isSharing}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="share-social" size={20} color={isSharing ? '#A1A1AA' : '#F97316'} />
+            <Text className={`font-bold ${isSharing ? 'text-text-secondary' : 'text-brand-primary'}`}>
+              {isSharing ? 'Preparando imagem...' : 'Compartilhar resultado'}
+            </Text>
+          </TouchableOpacity>
+        ) : null}
         <TouchableOpacity
           className="w-full bg-brand-primary rounded-xl py-4 items-center"
           onPress={() => { clearSession(); router.replace('/(tabs)/home'); }}
@@ -132,6 +188,7 @@ export default function RunSummaryScreen() {
           <Text className="text-white font-bold">Ir para o início</Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
