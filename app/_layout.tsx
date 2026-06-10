@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { LogBox } from 'react-native';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@shared/utils/queryClient';
+import { DialogHost } from '@shared/components/AppDialogs';
 import { useSessionRestore } from '@features/auth/hooks/useSessionRestore';
 import { usePushNotifications } from '@features/notifications/hooks/usePushNotifications';
 import * as Notifications from 'expo-notifications';
@@ -47,6 +48,7 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <AppNavigator />
+      <DialogHost />
     </QueryClientProvider>
   );
 }

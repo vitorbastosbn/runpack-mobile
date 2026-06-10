@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSessionStore } from '@store/session.store';
@@ -8,6 +8,7 @@ import { useLiveSession } from '@features/sessions/hooks/useLiveSession';
 import { useTelemetry } from '@features/sessions/hooks/useTelemetry';
 import { useFinishSession, useLeaveSession } from '@features/sessions/hooks/useSessionActions';
 import { Avatar } from '@shared/components/Avatar';
+import { confirmAction } from '@shared/components/AppDialogs';
 import type { RankingEntry } from '@features/sessions/types';
 
 function formatTime(ms: number): string {
@@ -80,33 +81,29 @@ export default function LiveSessionScreen() {
   const finishSession = useFinishSession();
   const leaveSession = useLeaveSession();
 
-  const handleEnd = () => {
-    const title = isCreator ? 'Encerrar para todos' : 'Sair da corrida';
-    const message = isCreator
-      ? 'Todos serão removidos da corrida.'
-      : 'Você sairá da corrida mas ela continuará para os outros.';
-    Alert.alert(title, message, [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Confirmar',
-        style: 'destructive',
-        onPress: async () => {
-          if (!sessionId || !userId) return;
-          const finalElapsedMs = joinedAt ? Math.max(0, Date.now() - joinedAt) : 0;
-          const finalPaceSkm = distanceM > 0
-            ? (finalElapsedMs / 1000) / (distanceM / 1000)
-            : 0;
-          sendTelemetry({ sessionId, userId, elapsedMs: finalElapsedMs, distanceM, paceSKm: finalPaceSkm });
+  const handleEnd = async () => {
+    const ok = await confirmAction({
+      title: isCreator ? 'Encerrar para todos' : 'Sair da corrida',
+      message: isCreator
+        ? 'Todos serão removidos da corrida.'
+        : 'Você sairá da corrida mas ela continuará para os outros.',
+      confirmLabel: isCreator ? 'Encerrar corrida' : 'Sair da corrida',
+      destructive: true,
+    });
+    if (!ok || !sessionId || !userId) return;
 
-          if (isCreator) {
-            await finishSession.mutateAsync({ sessionId, elapsedMs: finalElapsedMs, distanceM, paceSKm: finalPaceSkm });
-          } else {
-            await leaveSession.mutateAsync(sessionId);
-          }
-          router.replace('/(modal)/run-summary');
-        },
-      },
-    ]);
+    const finalElapsedMs = joinedAt ? Math.max(0, Date.now() - joinedAt) : 0;
+    const finalPaceSkm = distanceM > 0
+      ? (finalElapsedMs / 1000) / (distanceM / 1000)
+      : 0;
+    sendTelemetry({ sessionId, userId, elapsedMs: finalElapsedMs, distanceM, paceSKm: finalPaceSkm });
+
+    if (isCreator) {
+      await finishSession.mutateAsync({ sessionId, elapsedMs: finalElapsedMs, distanceM, paceSKm: finalPaceSkm });
+    } else {
+      await leaveSession.mutateAsync(sessionId);
+    }
+    router.replace('/(modal)/run-summary');
   };
 
   const renderRankEntry = useCallback(({ item }: { item: RankingEntry }) => {

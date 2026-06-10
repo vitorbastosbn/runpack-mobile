@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Image, ScrollView, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { Image, ScrollView, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useUserProfile } from '@features/profile/hooks/useUserProfile';
@@ -9,6 +9,7 @@ import { ScreenHeader } from '@shared/components/ScreenHeader';
 import { SectionLabel } from '@shared/components/SectionLabel';
 import { Button } from '@shared/components/Button';
 import { MoreMenu } from '@shared/components/MoreMenu';
+import { confirmAction } from '@shared/components/AppDialogs';
 import { colors } from '@constants/theme';
 import { formatPace } from '@shared/utils/format';
 import { useQueryClient } from '@tanstack/react-query';
@@ -87,27 +88,21 @@ export function PublicProfileView({ id, friendshipId, favorite }: PublicProfileV
   const { data: achievements = [], isLoading: loadingAchievements } = useUserAchievements(id);
   const { removeFriend, updateFavorite } = useFriendActions();
 
-  const handleRemoveFriend = () => {
+  const handleRemoveFriend = async () => {
     if (!friendshipId) return;
-    Alert.alert(
-      'Remover amigo',
-      `Deseja remover ${profile?.name ?? 'este usuário'} da sua lista de amigos?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Remover',
-          style: 'destructive',
-          onPress: () => {
-            removeFriend.mutate(friendshipId, {
-              onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: ['friends'] });
-                router.back();
-              },
-            });
-          },
-        },
-      ]
-    );
+    const ok = await confirmAction({
+      title: 'Remover amigo',
+      message: `${profile?.name ?? 'Este usuário'} sairá da sua lista de amigos.`,
+      confirmLabel: 'Remover',
+      destructive: true,
+    });
+    if (!ok) return;
+    removeFriend.mutate(friendshipId, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['friends'] });
+        router.back();
+      },
+    });
   };
 
   const handleToggleFavorite = () => {

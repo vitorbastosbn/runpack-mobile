@@ -1,10 +1,11 @@
-import { Alert, Linking, ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Linking, ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useLogout } from '@features/auth/hooks/useLogout';
 import { useDeleteAccount } from '@features/profile/hooks/useProfileActions';
 import { useNotificationPreferences } from '@features/notifications/hooks/useNotificationPreferences';
 import { ScreenHeader } from '@shared/components/ScreenHeader';
+import { confirmAction } from '@shared/components/AppDialogs';
 import { colors } from '@constants/theme';
 import type { NotificationPreferences } from '@features/notifications/types';
 
@@ -100,26 +101,25 @@ export default function SettingsScreen() {
   const deleteAccount = useDeleteAccount();
   const { data: prefs, update } = useNotificationPreferences();
 
-  const handleLogout = () => {
-    Alert.alert('Sair da conta', 'Tem certeza que deseja sair?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Sair', style: 'destructive', onPress: logout },
-    ]);
+  const handleLogout = async () => {
+    const ok = await confirmAction({
+      title: 'Sair da conta',
+      message: 'Você precisará entrar novamente com o Google.',
+      confirmLabel: 'Sair',
+      destructive: true,
+    });
+    if (ok) logout();
   };
 
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      'Excluir conta',
-      'Todos os seus dados serão excluídos permanentemente — corridas, grupos, conquistas e histórico. Esta ação não pode ser desfeita.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir permanentemente',
-          style: 'destructive',
-          onPress: () => deleteAccount.mutate(),
-        },
-      ]
-    );
+  const handleDeleteAccount = async () => {
+    const ok = await confirmAction({
+      title: 'Excluir conta',
+      message:
+        'Todos os seus dados serão excluídos permanentemente — corridas, grupos, conquistas e histórico. Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir permanentemente',
+      destructive: true,
+    });
+    if (ok) deleteAccount.mutate();
   };
 
   return (

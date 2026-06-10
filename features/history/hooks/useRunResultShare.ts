@@ -1,7 +1,8 @@
 import { useCallback, useRef, useState } from 'react';
-import { Alert, View } from 'react-native';
+import { View } from 'react-native';
 import * as Sharing from 'expo-sharing';
 import { captureRef } from 'react-native-view-shot';
+import { showToast } from '@shared/components/AppDialogs';
 
 function toFileUri(uri: string): string {
   return uri.startsWith('file://') ? uri : `file://${uri}`;
@@ -24,7 +25,7 @@ export function useRunResultShare() {
 
     const isAvailable = await Sharing.isAvailableAsync();
     if (!isAvailable) {
-      Alert.alert('Compartilhamento indisponível', 'Este dispositivo não permite compartilhar imagens agora.');
+      showToast('Este dispositivo não permite compartilhar imagens agora.', 'error');
       return;
     }
 
@@ -46,7 +47,7 @@ export function useRunResultShare() {
       });
     } catch (error) {
       console.warn('[share-run-result]', error);
-      Alert.alert('Não foi possível compartilhar', 'Tente novamente em alguns instantes.');
+      showToast('Não foi possível compartilhar. Tente novamente.', 'error');
     } finally {
       setIsSharing(false);
     }

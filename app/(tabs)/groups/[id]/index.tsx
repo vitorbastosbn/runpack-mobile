@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert, Share } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Share } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -16,6 +16,7 @@ import { SectionLabel } from '@shared/components/SectionLabel';
 import { Fab } from '@shared/components/Fab';
 import { MoreMenu, type MoreMenuItem } from '@shared/components/MoreMenu';
 import { GroupImage } from '@shared/components/GroupImage';
+import { confirmAction, showActionSheet, showToast } from '@shared/components/AppDialogs';
 import { colors } from '@constants/theme';
 import { RunPodium } from '@features/groups/components/RunPodium';
 import { invitesService } from '@features/invites/services/invites.service';
@@ -54,68 +55,74 @@ export default function GroupDetailScreen() {
     } catch {}
   };
 
-  const handleDelete = () => {
-    Alert.alert('Deletar grupo', `Tem certeza que deseja deletar "${group?.name}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Deletar', style: 'destructive',
-        onPress: async () => {
-          await deleteGroup.mutateAsync(id);
-          router.replace('/(tabs)/groups');
-        },
-      },
-    ]);
+  const handleDelete = async () => {
+    const ok = await confirmAction({
+      title: 'Deletar grupo',
+      message: `"${group?.name}" e todo o histórico do grupo serão removidos. Esta ação não pode ser desfeita.`,
+      confirmLabel: 'Deletar grupo',
+      destructive: true,
+    });
+    if (!ok) return;
+    await deleteGroup.mutateAsync(id);
+    router.replace('/(tabs)/groups');
   };
 
-  const handleLeaveGroup = () => {
-    Alert.alert('Sair do grupo', `Tem certeza que deseja sair de "${group?.name}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Sair', style: 'destructive',
-        onPress: async () => {
-          if (!currentUserId) return;
-          try {
-            await removeMember.mutateAsync(currentUserId);
-            router.replace('/(tabs)/groups');
-          } catch {
-            Alert.alert('Não foi possível sair', 'Transfira o papel de admin antes de sair do grupo.');
-          }
-        },
-      },
-    ]);
+  const leaveGroup = async (userId: string) => {
+    try {
+      await removeMember.mutateAsync(userId);
+      router.replace('/(tabs)/groups');
+    } catch {
+      showToast('Transfira o papel de admin antes de sair do grupo.', 'error');
+    }
+  };
+
+  const handleLeaveGroup = async () => {
+    const ok = await confirmAction({
+      title: 'Sair do grupo',
+      message: `Você deixará de participar das corridas de "${group?.name}".`,
+      confirmLabel: 'Sair do grupo',
+      destructive: true,
+    });
+    if (!ok || !currentUserId) return;
+    await leaveGroup(currentUserId);
   };
 
   const handleMemberAction = (member: GroupMember) => {
     if (member.userId === currentUserId) {
-      Alert.alert('Sair do grupo', 'Tem certeza?', [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Sair',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await removeMember.mutateAsync(member.userId);
-              router.replace('/(tabs)/groups');
-            } catch {
-              Alert.alert('Não foi possível sair', 'Transfira o papel de admin antes de sair do grupo.');
-            }
-          },
-        },
-      ]);
+      handleLeaveGroup();
       return;
     }
     if (!isAdmin) return;
-    const options = [
-      { text: 'Cancelar', style: 'cancel' as const },
-      {
-        text: 'Remover do grupo', style: 'destructive' as const,
-        onPress: () => removeMember.mutate(member.userId),
-      },
-      member.role === 'member'
-        ? { text: 'Tornar admin', onPress: () => updateRole.mutate({ userId: member.userId, role: 'admin' }) }
-        : { text: 'Remover admin', onPress: () => updateRole.mutate({ userId: member.userId, role: 'member' }) },
-    ];
-    Alert.alert(member.name, undefined, options);
+    showActionSheet({
+      title: member.name,
+      items: [
+        member.role === 'member'
+          ? {
+              label: 'Tornar admin',
+              icon: 'shield-checkmark-outline',
+              onPress: () => updateRole.mutate({ userId: member.userId, role: 'admin' }),
+            }
+          : {
+              label: 'Remover admin',
+              icon: 'shield-outline',
+              onPress: () => updateRole.mutate({ userId: member.userId, role: 'member' }),
+            },
+        {
+          label: 'Remover do grupo',
+          icon: 'person-remove-outline',
+          destructive: true,
+          onPress: async () => {
+            const ok = await confirmAction({
+              title: 'Remover do grupo',
+              message: `${member.name} será removido de "${group?.name}".`,
+              confirmLabel: 'Remover',
+              destructive: true,
+            });
+            if (ok) removeMember.mutate(member.userId);
+          },
+        },
+      ],
+    });
   };
 
   const renderMember = useCallback(({ item }: { item: GroupMember }) => {
