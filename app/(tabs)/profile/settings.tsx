@@ -1,4 +1,5 @@
 import { Linking, ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { AdBanner } from '@shared/components/AdBanner';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useLogout } from '@features/auth/hooks/useLogout';
@@ -208,6 +209,7 @@ export default function SettingsScreen() {
           />
         </View>
       </ScrollView>
+      <AdBanner />
     </View>
   );
 }

@@ -1,4 +1,5 @@
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
+import { AdBanner } from '@shared/components/AdBanner';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useGroupsInfinite } from '@features/groups/hooks/useGroups';
@@ -133,6 +134,7 @@ export default function GroupsScreen() {
       />
 
       <Fab icon="add" onPress={() => router.push('/(tabs)/groups/create')} accessibilityLabel="Criar grupo" />
+      <AdBanner />
     </View>
   );
 }

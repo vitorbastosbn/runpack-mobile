@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Image, ScrollView, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { AdBanner } from '@shared/components/AdBanner';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useUserProfile } from '@features/profile/hooks/useUserProfile';
@@ -270,6 +271,7 @@ export function PublicProfileView({ id, friendshipId, favorite }: PublicProfileV
         </View>
 
       </ScrollView>
+      <AdBanner />
     </View>
   );
 }

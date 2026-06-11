@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity } from 'react-native';
+import { AdBanner } from '@shared/components/AdBanner';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@constants/theme';
@@ -20,6 +21,7 @@ export default function InvalidInviteScreen() {
       >
         <Text className="text-text-primary font-semibold">Ir para o início</Text>
       </TouchableOpacity>
+      <AdBanner />
     </View>
   );
 }

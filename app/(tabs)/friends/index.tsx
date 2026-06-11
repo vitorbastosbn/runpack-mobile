@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
+import { AdBanner } from '@shared/components/AdBanner';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useFriends, useFriendRequestsCount, useFriendActions } from '@features/friends/hooks/useFriends';
@@ -172,6 +173,7 @@ export default function FriendsScreen() {
           }
         />
       )}
+      <AdBanner />
     </View>
   );
 }

@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { View, Text, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { AdBanner } from '@shared/components/AdBanner';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useActiveRuns } from '@features/sessions/hooks/useActiveRuns';
@@ -67,6 +68,7 @@ export default function ActiveRunsScreen() {
           )
         }
       />
+      <AdBanner />
     </View>
   );
 }

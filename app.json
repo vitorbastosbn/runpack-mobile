@@ -52,7 +52,7 @@
       "typedRoutes": true
     },
     "extra": {
-      "revenueCatApiKey": "goog_REPLACE_WITH_REAL_KEY",
+      "revenueCatApiKey": "test_EzKCvFrVZkMOrpxHYykyRTjfIkk",
       "router": {},
       "eas": {
         "projectId": "dbb6b881-8ef0-4038-b8be-8e7c98bb29cc"

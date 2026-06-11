@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { AdBanner } from '@shared/components/AdBanner';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { Ionicons } from '@expo/vector-icons';
@@ -111,6 +112,7 @@ export default function InviteScreen() {
       <TouchableOpacity className="mt-4 py-3" onPress={() => router.replace('/(tabs)/home')}>
         <Text className="text-text-secondary">Recusar</Text>
       </TouchableOpacity>
+      <AdBanner />
     </View>
   );
 }

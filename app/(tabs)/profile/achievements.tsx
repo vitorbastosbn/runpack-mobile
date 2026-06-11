@@ -1,4 +1,5 @@
 import { View, Text, FlatList, ActivityIndicator } from 'react-native';
+import { AdBanner } from '@shared/components/AdBanner';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useMyAchievements } from '@features/achievements/hooks/useMyAchievements';
@@ -78,6 +79,7 @@ export default function AchievementsScreen() {
           contentContainerStyle={{ paddingTop: 8, paddingBottom: 32 }}
         />
       )}
+      <AdBanner />
     </View>
   );
 }

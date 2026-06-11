@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { View, Text, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { AdBanner } from '@shared/components/AdBanner';
 import { useRouter } from 'expo-router';
 import { useCreateGroup } from '@features/groups/hooks/useGroups';
 import { ScreenHeader } from '@shared/components/ScreenHeader';
@@ -81,6 +82,7 @@ export default function CreateGroupScreen() {
 
         <Button label="Criar grupo" onPress={handleCreate} loading={createGroup.isPending} />
       </View>
+      <AdBanner />
     </KeyboardAvoidingView>
   );
 }

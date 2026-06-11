@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { AdBanner } from '@shared/components/AdBanner';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useGroup, useGroupRuns } from '@features/groups/hooks/useGroups';
 import { Avatar } from '@shared/components/Avatar';
@@ -95,6 +96,7 @@ export default function GroupRunsScreen() {
           )
         }
       />
+      <AdBanner />
     </View>
   );
 }

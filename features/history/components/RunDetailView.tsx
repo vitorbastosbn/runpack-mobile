@@ -1,4 +1,5 @@
 import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
+import { AdBanner } from '@shared/components/AdBanner';
 import { useRouter } from 'expo-router';
 import { ShareRunCard } from '@features/history/components/ShareRunCard';
 import { useRunDetail } from '@features/history/hooks/useRunDetail';
@@ -183,6 +184,7 @@ export function RunDetailView({ sessionId }: { sessionId: string }) {
           />
         </View>
       </ScrollView>
+      <AdBanner />
     </View>
   );
 }

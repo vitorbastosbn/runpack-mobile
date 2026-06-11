@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Share } from 'react-native';
+import { AdBanner } from '@shared/components/AdBanner';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -295,6 +296,7 @@ export default function GroupDetailScreen() {
         onClose={() => setGoalModalVisible(false)}
         onStart={handleConfirmStart}
       />
+      <AdBanner />
     </View>
   );
 }
