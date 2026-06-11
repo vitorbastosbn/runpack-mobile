@@ -11,6 +11,7 @@ import { SectionLabel } from '@shared/components/SectionLabel';
 import { Button, ButtonStack } from '@shared/components/Button';
 import { colors } from '@constants/theme';
 import type { ShareRunCardInput } from '@features/history/utils/shareRunResult';
+import { useRunSummaryInterstitial } from '@features/subscription/hooks/useRunSummaryInterstitial';
 
 function formatTime(ms: number): string {
   const totalSec = Math.floor(ms / 1000);
@@ -56,6 +57,7 @@ export default function RunSummaryScreen() {
   const router = useRouter();
   const { sessionId, elapsedMs, distanceM, paceSKm, ranking, groupName, clearSession } = useSessionStore();
   const { cardRef, isSharing, shareRunResult } = useRunResultShare();
+  useRunSummaryInterstitial();
 
   // Poll once after 2s delay so async achievement evaluation has time to complete
   const { data: achievements } = useSessionAchievements(sessionId ?? '', !!sessionId);
