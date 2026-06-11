@@ -39,12 +39,19 @@
         {
           "locationAlwaysAndWhenInUsePermission": "O RunPack usa sua localização para medir a distância percorrida durante corridas."
         }
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-3940256099942544~3347511713"
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
+      "revenueCatApiKey": "goog_REPLACE_WITH_REAL_KEY",
       "router": {},
       "eas": {
         "projectId": "dbb6b881-8ef0-4038-b8be-8e7c98bb29cc"
