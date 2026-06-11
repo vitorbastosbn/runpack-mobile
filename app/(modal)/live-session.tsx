@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { AdBanner } from '@shared/components/AdBanner';
 import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -287,6 +288,7 @@ export default function LiveSessionScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+      <AdBanner />
     </View>
   );
 }
