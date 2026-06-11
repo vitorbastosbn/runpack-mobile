@@ -6,6 +6,7 @@ import { queryClient } from '@shared/utils/queryClient';
 import { DialogHost } from '@shared/components/AppDialogs';
 import { useSessionRestore } from '@features/auth/hooks/useSessionRestore';
 import { usePushNotifications } from '@features/notifications/hooks/usePushNotifications';
+import { useSubscriptionSync } from '@features/subscription/hooks/useSubscriptionSync';
 import * as Notifications from 'expo-notifications';
 
 // Known-benign Expo Router dev warning from its internal useLinking initial-URL
@@ -27,6 +28,7 @@ Notifications.setNotificationHandler({
 function AppNavigator() {
   useSessionRestore();
   usePushNotifications();
+  useSubscriptionSync();
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
@@ -37,6 +39,7 @@ function AppNavigator() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="(modal)/live-session" options={{ presentation: 'fullScreenModal' }} />
       <Stack.Screen name="(modal)/run-summary" options={{ presentation: 'fullScreenModal' }} />
+      <Stack.Screen name="(modal)/paywall" options={{ presentation: 'modal' }} />
       <Stack.Screen name="invite/[token]" />
       <Stack.Screen name="invite/invalid" />
       <Stack.Screen name="active-runs" />

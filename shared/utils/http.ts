@@ -2,6 +2,16 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { API_BASE_URL } from '@constants/api';
 
+type PremiumErrorListener = (code: string) => void;
+let premiumErrorListener: PremiumErrorListener | null = null;
+
+/** Registrado pela feature de subscription — abre a Paywall em erros 403 premium. */
+export function setPremiumErrorListener(listener: PremiumErrorListener | null) {
+  premiumErrorListener = listener;
+}
+
+const PREMIUM_ERROR_CODES = new Set(['GROUP_LIMIT_REACHED', 'SESSION_LIMIT_REACHED', 'PREMIUM_REQUIRED']);
+
 export const http = axios.create({
   baseURL: API_BASE_URL,
   timeout: 15_000,
@@ -29,6 +39,11 @@ http.interceptors.response.use(
           : error.message;
 
       console.warn('[api]', method, url, error.response.status, message);
+    }
+
+    const premiumCode = error.response?.data?.code;
+    if (typeof premiumCode === 'string' && PREMIUM_ERROR_CODES.has(premiumCode)) {
+      premiumErrorListener?.(premiumCode);
     }
 
     if (error.response?.status === 401) {
