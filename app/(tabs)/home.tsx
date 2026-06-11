@@ -308,7 +308,7 @@ export default function HomeScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 130 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brand.primary} />
         }
@@ -433,48 +433,50 @@ export default function HomeScreen() {
         }}
       />
 
-      {/* Docked action — start a run, or get back to the live one */}
-      <View className="absolute bottom-0 left-0 right-0 px-5 pt-3 pb-6 bg-surface-bg">
-        {sessionId ? (
-          <TouchableOpacity
-            className="h-14 rounded-2xl bg-surface-elevated flex-row items-center justify-center gap-2.5"
-            onPress={() => router.push('/(modal)/live-session')}
-            activeOpacity={0.85}
-            accessibilityRole="button"
-            accessibilityLabel="Voltar à corrida em andamento"
-          >
-            <View className="w-2 h-2 rounded-full bg-status-success" />
-            <Text className="text-text-primary font-bold text-base">Voltar à corrida</Text>
-            <Ionicons name="arrow-forward" size={16} color={colors.status.success} />
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            className="h-14 rounded-2xl bg-brand-primary flex-row items-center justify-center gap-2"
-            style={{
-              shadowColor: colors.brand.primary,
-              shadowOffset: { width: 0, height: 6 },
-              shadowOpacity: 0.35,
-              shadowRadius: 14,
-              elevation: 10,
-            }}
-            onPress={() => setGoalModalVisible(true)}
-            disabled={isCreatingSession}
-            activeOpacity={0.85}
-            accessibilityRole="button"
-            accessibilityLabel="Iniciar corrida"
-          >
-            {isCreatingSession ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <>
-                <Ionicons name="flash" size={18} color="#fff" />
-                <Text className="text-white font-bold text-base">Iniciar corrida</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        )}
+      {/* Footer: banner (free only) stacked above the action button */}
+      <View className="bg-surface-bg">
+        <AdBanner />
+        <View className="px-5 pt-3 pb-6">
+          {sessionId ? (
+            <TouchableOpacity
+              className="h-14 rounded-2xl bg-surface-elevated flex-row items-center justify-center gap-2.5"
+              onPress={() => router.push('/(modal)/live-session')}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel="Voltar à corrida em andamento"
+            >
+              <View className="w-2 h-2 rounded-full bg-status-success" />
+              <Text className="text-text-primary font-bold text-base">Voltar à corrida</Text>
+              <Ionicons name="arrow-forward" size={16} color={colors.status.success} />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              className="h-14 rounded-2xl bg-brand-primary flex-row items-center justify-center gap-2"
+              style={{
+                shadowColor: colors.brand.primary,
+                shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: 0.35,
+                shadowRadius: 14,
+                elevation: 10,
+              }}
+              onPress={() => setGoalModalVisible(true)}
+              disabled={isCreatingSession}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel="Iniciar corrida"
+            >
+              {isCreatingSession ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <>
+                  <Ionicons name="flash" size={18} color="#fff" />
+                  <Text className="text-white font-bold text-base">Iniciar corrida</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
-      <AdBanner />
     </View>
   );
 }
