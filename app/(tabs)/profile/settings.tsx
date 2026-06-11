@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLogout } from '@features/auth/hooks/useLogout';
 import { useDeleteAccount } from '@features/profile/hooks/useProfileActions';
 import { useNotificationPreferences } from '@features/notifications/hooks/useNotificationPreferences';
+import { useSubscription } from '@features/subscription/hooks/useSubscription';
 import { ScreenHeader } from '@shared/components/ScreenHeader';
 import { confirmAction } from '@shared/components/AppDialogs';
 import { colors } from '@constants/theme';
@@ -61,25 +62,46 @@ function NotifToggleRow({
   label,
   value,
   onToggle,
+  locked,
+  onLockedPress,
 }: {
   icon: string;
   label: string;
   value: boolean;
   onToggle: (v: boolean) => void;
+  locked?: boolean;
+  onLockedPress?: () => void;
 }) {
   return (
     <View className="flex-row items-center px-4 py-3.5 bg-surface-card">
       <Ionicons name={icon as any} size={19} color={colors.text.secondary} style={{ marginRight: 14 }} />
       <Text className="flex-1 text-text-primary" style={{ fontSize: 15 }}>{label}</Text>
-      <Switch
-        value={value}
-        onValueChange={onToggle}
-        trackColor={{ false: colors.surface.elevated, true: colors.brand.primary }}
-        thumbColor="#F7F7F8"
-      />
+      {locked ? (
+        <TouchableOpacity
+          onPress={onLockedPress}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={`${label} — exclusivo Premium`}
+        >
+          <Ionicons name="lock-closed" size={18} color={colors.brand.primary} />
+        </TouchableOpacity>
+      ) : (
+        <Switch
+          value={value}
+          onValueChange={onToggle}
+          trackColor={{ false: colors.surface.elevated, true: colors.brand.primary }}
+          thumbColor="#F7F7F8"
+        />
+      )}
     </View>
   );
 }
+
+const PREMIUM_NOTIF_KEYS: ReadonlySet<keyof NotificationPreferences> = new Set([
+  'sessionStarted',
+  'friendRunStarted',
+  'friendJoinedRun',
+]);
 
 const NOTIF_ROWS: { key: keyof NotificationPreferences; icon: string; label: string }[] = [
   { key: 'friendRequest',       icon: 'person-add-outline',    label: 'Solicitação de amizade' },
@@ -100,6 +122,7 @@ export default function SettingsScreen() {
   const { logout } = useLogout();
   const deleteAccount = useDeleteAccount();
   const { data: prefs, update } = useNotificationPreferences();
+  const { isPremium, openPaywall } = useSubscription();
 
   const handleLogout = async () => {
     const ok = await confirmAction({
@@ -138,6 +161,8 @@ export default function SettingsScreen() {
                 label={row.label}
                 value={prefs?.[row.key] ?? true}
                 onToggle={(v) => update.mutate({ key: row.key, value: v })}
+                locked={PREMIUM_NOTIF_KEYS.has(row.key) && !isPremium}
+                onLockedPress={openPaywall}
               />
             </View>
           ))}

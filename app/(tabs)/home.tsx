@@ -25,6 +25,8 @@ import { useGroups, useGroupMembers } from '@features/groups/hooks/useGroups';
 import { useRunHistory } from '@features/history/hooks/useRunHistory';
 import { formatDistance, formatDuration, formatPace, formatRank } from '@shared/utils/format';
 import { AdBanner } from '@shared/components/AdBanner';
+import { useSubscription } from '@features/subscription/hooks/useSubscription';
+import { PremiumUpsellCard } from '@features/subscription/components/PremiumUpsellCard';
 import type { Group, GroupMember } from '@features/groups/types';
 import type { ActiveRun } from '@features/sessions/types';
 import type { RunSummary } from '@features/history/types';
@@ -256,6 +258,7 @@ export default function HomeScreen() {
 
   const [refreshing, setRefreshing] = useState(false);
   const [goalModalVisible, setGoalModalVisible] = useState(false);
+  const { isPremium } = useSubscription();
 
   // Refresh active runs each time home regains focus (covers members who
   // didn't receive a start/finish push).
@@ -324,14 +327,19 @@ export default function HomeScreen() {
           />
         ) : null}
 
-        {/* Live now */}
+        {/* Live now — feed em tempo real é exclusivo premium */}
         <View className="mb-7">
           <SectionLabel
             label="Ao vivo agora"
-            action={activeRuns.length > 3 ? `Ver todas (${activeRuns.length})` : undefined}
+            action={isPremium && activeRuns.length > 3 ? `Ver todas (${activeRuns.length})` : undefined}
             onAction={() => router.push('/active-runs')}
           />
-          {activeRunsLoading ? (
+          {!isPremium ? (
+            <PremiumUpsellCard
+              title="Acompanhe corridas ao vivo"
+              subtitle="Veja em tempo real quando amigos e grupos estão correndo — exclusivo Premium"
+            />
+          ) : activeRunsLoading ? (
             <ActivityIndicator color={colors.brand.primary} />
           ) : activeRuns.length === 0 ? (
             <EmptyState

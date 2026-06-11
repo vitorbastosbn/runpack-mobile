@@ -10,6 +10,8 @@ import { SectionLabel } from '@shared/components/SectionLabel';
 import { colors } from '@constants/theme';
 import { formatDistance, formatPace } from '@shared/utils/format';
 import { AdBanner } from '@shared/components/AdBanner';
+import { PremiumBadge } from '@features/subscription/components/PremiumBadge';
+import { useSubscriptionStore } from '@store/subscription.store';
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -50,6 +52,7 @@ function IdentityHeader({
   avatarUrl?: string | null;
   createdAt: string;
 }) {
+  const isPremium = useSubscriptionStore((s) => s.isPremium);
   return (
     <View className="flex-row items-center px-5 gap-4">
       {avatarUrl ? (
@@ -62,9 +65,15 @@ function IdentityHeader({
         </View>
       )}
       <View className="flex-1">
-        <Text className="text-text-primary text-[24px] font-extrabold tracking-tight" numberOfLines={1}>
-          {name}
-        </Text>
+        <View className="flex-row items-center gap-2">
+          <Text
+            className="text-text-primary text-[24px] font-extrabold tracking-tight shrink"
+            numberOfLines={1}
+          >
+            {name}
+          </Text>
+          {isPremium && <PremiumBadge />}
+        </View>
         <Text className="text-text-secondary text-[13px] mt-0.5" numberOfLines={1}>
           @{username} · desde {formatMemberSince(createdAt)}
         </Text>
