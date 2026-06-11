@@ -7,6 +7,7 @@ import { DialogHost } from '@shared/components/AppDialogs';
 import { useSessionRestore } from '@features/auth/hooks/useSessionRestore';
 import { usePushNotifications } from '@features/notifications/hooks/usePushNotifications';
 import { useSubscriptionSync } from '@features/subscription/hooks/useSubscriptionSync';
+import { useAdsInit } from '@features/subscription/hooks/useAdsInit';
 import * as Notifications from 'expo-notifications';
 
 // Known-benign Expo Router dev warning from its internal useLinking initial-URL
@@ -29,6 +30,7 @@ function AppNavigator() {
   useSessionRestore();
   usePushNotifications();
   useSubscriptionSync();
+  useAdsInit();
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
