@@ -24,6 +24,7 @@ import { useMyProfile } from '@features/profile/hooks/useMyProfile';
 import { useGroups, useGroupMembers } from '@features/groups/hooks/useGroups';
 import { useRunHistory } from '@features/history/hooks/useRunHistory';
 import { formatDistance, formatDuration, formatPace, formatRank } from '@shared/utils/format';
+import { AdBanner } from '@shared/components/AdBanner';
 import type { Group, GroupMember } from '@features/groups/types';
 import type { ActiveRun } from '@features/sessions/types';
 import type { RunSummary } from '@features/history/types';
@@ -465,6 +466,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
         )}
       </View>
+      <AdBanner />
     </View>
   );
 }

@@ -6,6 +6,7 @@ import { EmptyState } from '@shared/components/EmptyState';
 import { colors } from '@constants/theme';
 import type { RunSummary } from '@features/history/types';
 import { formatDistance, formatDuration, formatPace, formatRank } from '@shared/utils/format';
+import { AdBanner } from '@shared/components/AdBanner';
 
 type Row =
   | { type: 'month'; key: string; label: string }
@@ -153,6 +154,7 @@ export default function HistoryScreen() {
           showsVerticalScrollIndicator={false}
         />
       )}
+      <AdBanner />
     </View>
   );
 }

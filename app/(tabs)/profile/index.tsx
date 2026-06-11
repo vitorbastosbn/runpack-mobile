@@ -9,6 +9,7 @@ import { useMyAchievements } from '@features/achievements/hooks/useMyAchievement
 import { SectionLabel } from '@shared/components/SectionLabel';
 import { colors } from '@constants/theme';
 import { formatDistance, formatPace } from '@shared/utils/format';
+import { AdBanner } from '@shared/components/AdBanner';
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -321,6 +322,7 @@ export default function ProfileScreen() {
           </View>
         </View>
       </ScrollView>
+      <AdBanner />
     </View>
   );
 }
